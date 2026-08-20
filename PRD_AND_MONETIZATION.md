@@ -388,4 +388,4 @@ Featured Fee   = Terpisah (opsional, admin set harga)
 
 ---
 
-*PRD ini adalah acuan utama untuk development team dan AI coding assistant (Cursor/Copilot) dalam membangun SurvMarkt v1.0 Mobile App.*
+*PRD ini adalah acuan utama untuk development team dalam membangun SurvMarkt v1.0 Mobile App.*
