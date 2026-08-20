@@ -161,22 +161,6 @@ dart run build_runner build --delete-conflicting-outputs
 flutter run
 ```
 
-### Environment Variables
-
-Salin file environment template dan isi dengan value yang sesuai:
-
-```bash
-cp .env.example .env
-```
-
-```env
-API_BASE_URL=https://api.survmarkt.com/v1
-MIDTRANS_CLIENT_KEY=your_client_key
-FIREBASE_PROJECT_ID=your_project_id
-```
-
-> **Catatan:** Jangan commit file `.env` ke repository. File ini sudah ada di `.gitignore`.
-
 ### Build APK
 
 ```bash
@@ -208,17 +192,6 @@ flutter build appbundle --release
 | Dokumen | Deskripsi |
 |---|---|
 | [`docs/PRD_AND_MONETIZATION.md`](docs/PRD_AND_MONETIZATION.md) | Product Requirements Document v1.0 |
-| [`docs/PROMPT_SPEC.md`](docs/PROMPT_SPEC.md) | Architectural Prompt Specification (SCI) |
-
----
-
-## Kontribusi Tim
-
-| Anggota | Fokus |
-|---|---|
-| — | UI/UX & Design System |
-| — | State Management & Clean Architecture |
-| — | API Integration & Backend |
 
 ---
 
@@ -251,6 +224,6 @@ SurvMarkt berkontribusi pada ekosistem riset akademik dengan mempercepat dan mem
 
 <div align="center">
 
-*SurvMarkt — Tugas Besar Rekayasa Perangkat Lunak Mobile*
+*SurvMarkt — Tugas Besar Pemrograman Mobile*
 
 </div>
