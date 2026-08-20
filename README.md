@@ -191,7 +191,7 @@ flutter build appbundle --release
 
 | Dokumen | Deskripsi |
 |---|---|
-| [`docs/PRD_AND_MONETIZATION.md`](docs/PRD_AND_MONETIZATION.md) | Product Requirements Document v1.0 |
+| [`PRD_AND_MONETIZATION.md`](PRD_AND_MONETIZATION.md) | Product Requirements Document v1.0 |
 
 ---
 
