@@ -195,6 +195,16 @@ flutter build appbundle --release
 
 ---
 
+## Kontribusi Tim
+
+| Anggota | Fokus |
+|---|---|
+| — | UI/UX & Design System |
+| — | State Management & Clean Architecture |
+| — | API Integration & Backend |
+
+---
+
 ## Business Model
 
 SurvMarkt menggunakan model **Two-Sided Marketplace**:
