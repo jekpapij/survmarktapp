@@ -199,9 +199,9 @@ flutter build appbundle --release
 
 | Anggota | Fokus |
 |---|---|
-| — | UI/UX & Design System |
-| — | State Management & Clean Architecture |
-| — | API Integration & Backend |
+| Zaky | UI/UX & Design System |
+| Zaky | State Management & Clean Architecture |
+| Ammar | API Integration & Backend |
 
 ---
 
