@@ -191,7 +191,8 @@ flutter build appbundle --release
 
 | Dokumen | Deskripsi |
 |---|---|
-| [`PRD_AND_MONETIZATION.md`](PRD_AND_MONETIZATION.md) | Product Requirements Document v1.0 |
+| [`docs/PRD_AND_MONETIZATION.md`](docs/PRD_AND_MONETIZATION.md) | Product Requirements Document v1.0 |
+| [`docs/PROMPT_SPEC.md`](docs/PROMPT_SPEC.md) | Spec teknis — arsitektur, convention, design system, API endpoint reference |
 
 ---
 
