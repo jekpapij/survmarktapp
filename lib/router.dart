@@ -1,0 +1,98 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import 'core/constants/app_colors.dart';
+import 'features/auth/domain/entities/user_entity.dart';
+import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/auth/presentation/screens/register_screen.dart';
+import 'features/splash/presentation/screens/splash_screen.dart';
+
+/// Route constants — SCREAMING_SNAKE_CASE per PROMPT_SPEC.md §2.3 (di sini
+/// ditulis sebagai path string konstan, dipakai bareng go_router).
+abstract class AppRoutes {
+  AppRoutes._();
+
+  static const splash = '/splash';
+  static const login = '/login';
+  static const register = '/register';
+
+  // Placeholder — dashboard beneran per role nyusul pas fitur
+  // researcher/respondent/admin diimplementasi (di luar scope translate
+  // auth ini).
+  static const researcherHome = '/researcher/home';
+  static const respondentHome = '/respondent/home';
+  static const adminHome = '/admin/home';
+
+  static String homeForRole(UserRole role) => switch (role) {
+        UserRole.peneliti => researcherHome,
+        UserRole.responden => respondentHome,
+        UserRole.admin => adminHome,
+      };
+}
+
+final routerProvider = Provider<GoRouter>((ref) {
+  return GoRouter(
+    initialLocation: AppRoutes.splash,
+    routes: [
+      GoRoute(path: AppRoutes.splash, builder: (context, state) => const SplashScreen()),
+      GoRoute(path: AppRoutes.login, builder: (context, state) => const LoginScreen()),
+      GoRoute(path: AppRoutes.register, builder: (context, state) => const RegisterScreen()),
+      GoRoute(
+        path: AppRoutes.researcherHome,
+        builder: (context, state) => const _PlaceholderHomeScreen(
+          title: 'Dashboard Peneliti',
+          subtitle: 'Layar ini nyusul pas fitur Researcher diimplementasi (CPMK 3 lanjutan).',
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.respondentHome,
+        builder: (context, state) => const _PlaceholderHomeScreen(
+          title: 'Discover',
+          subtitle: 'Layar ini nyusul pas fitur Respondent diimplementasi (CPMK 3 lanjutan).',
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.adminHome,
+        builder: (context, state) => const _PlaceholderHomeScreen(
+          title: 'Dashboard Admin',
+          subtitle: 'Layar ini nyusul pas fitur Admin diimplementasi (CPMK 3 lanjutan).',
+        ),
+      ),
+    ],
+  );
+});
+
+/// Stand-in sementara biar alur login end-to-end bisa dites (login berhasil
+/// -> mendarat di sini), sampai dashboard beneran per role digarap.
+class _PlaceholderHomeScreen extends StatelessWidget {
+  const _PlaceholderHomeScreen({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.construction_outlined, size: 48, color: AppColors.slate400),
+              const SizedBox(height: 16),
+              Text(subtitle, textAlign: TextAlign.center),
+              const SizedBox(height: 24),
+              TextButton(
+                onPressed: () => context.go(AppRoutes.login),
+                child: const Text('Kembali ke Login'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

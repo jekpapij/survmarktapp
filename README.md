@@ -179,8 +179,8 @@ flutter build appbundle --release
 | Milestone | CPMK | Fokus | Status |
 |---|---|---|---|
 | 1 | CPMK 1 | SDG Ideation, PRD, Setup Environment | ✅ Done |
-| 2 | CPMK 2 | Design System, Dynamic UI/UX | 🔄 In Progress |
-| 3 | CPMK 3 | State Management, Clean Architecture | ⏳ Upcoming |
+| 2 | CPMK 2 | Design System, Dynamic UI/UX | ✅ Done |
+| 3 | CPMK 3 | State Management, Clean Architecture | 🔄 In Progress |
 | 4 | CPMK 4 | Persistent Storage, Offline-First | ⏳ Upcoming |
 | 5 | CPMK 5 | API Integration, Payment Gateway | ⏳ Upcoming |
 | 6 | CPMK 6 | Security, CI/CD, Store Distribution | ⏳ Upcoming |

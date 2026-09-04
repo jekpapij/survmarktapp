@@ -1,0 +1,23 @@
+/// Base URL & endpoint path, mengacu ke PROMPT_SPEC.md §8 (API Endpoint Reference).
+///
+/// Backend (kerjaan Ammar, lihat CLAUDE.md) belum live saat file ini ditulis —
+/// base URL di bawah cuma placeholder buat local dev (10.0.2.2 = alias
+/// Android emulator ke localhost host). Integrasi beneran ke backend adalah
+/// scope CPMK 5 (Integration Engine), bukan CPMK 3.
+class ApiConstants {
+  ApiConstants._();
+
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:3000/api/v1',
+  );
+
+  static const Duration connectTimeout = Duration(seconds: 30);
+  static const Duration receiveTimeout = Duration(seconds: 30);
+
+  // Auth — PROMPT_SPEC.md §8
+  static const String login = '/auth/login';
+  static const String register = '/auth/register';
+  static const String refresh = '/auth/refresh';
+  static const String logout = '/auth/logout';
+}
