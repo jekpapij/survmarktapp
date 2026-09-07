@@ -5,7 +5,11 @@ class AppColors {
 
   // Primary — Indigo
   static const Color primary900 = Color(0xFF312E81);
-  static const Color primary600 = Color(0xFF4F46E5);
+  // Update 2026-09-07: disamain persis sama warna tombol/link nyata di file
+  // Figma (dicek via Figma Dev Mode MCP get_design_context pada frame
+  // login-page) — sebelumnya #4F46E5, aslinya di Figma #4338CA. Ini global,
+  // jadi kepake otomatis di semua tombol/link primary di seluruh app.
+  static const Color primary600 = Color(0xFF4338CA);
   static const Color primary100 = Color(0xFFE0E7FF);
   static const Color primary50  = Color(0xFFEEF2FF);
 

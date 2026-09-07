@@ -27,6 +27,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _rememberMe = false;
 
   @override
   void initState() {
@@ -81,18 +82,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('SURVMARKT', style: AppTypography.eyebrow),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  isReturningUser ? 'Selamat Datang Kembali' : 'SurvMarkt Selamat Datang',
-                  style: AppTypography.displayLarge,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  isReturningUser
-                      ? 'Masuk lagi buat lanjutin aktivitas kamu di SurvMarkt.'
-                      : 'Masuk buat mulai cari survei atau kelola penelitianmu.',
-                  style: AppTypography.bodyMedium,
+                Center(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/images/survmarkt_logo.png',
+                        width: 90,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'SurvMarkt',
+                        style: AppTypography.displayMedium.copyWith(fontSize: 24),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isReturningUser ? 'Selamat Datang Kembali' : 'Selamat Datang',
+                        style: AppTypography.displaySmall.copyWith(
+                          color: AppColors.slate900,
+                          fontWeight: FontWeight.w400,
+                          fontSize: 20,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        isReturningUser
+                            ? 'Masuk lagi buat lanjutin aktivitas kamu di SurvMarkt.'
+                            : 'Masuk buat mulai cari survei atau kelola penelitianmu.',
+                        textAlign: TextAlign.center,
+                        style: AppTypography.monoSmall.copyWith(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 SurvMarktTextField(
@@ -109,6 +133,44 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   obscureText: true,
                   prefixIcon: Icons.lock_outline,
                   validator: Validators.password,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: Checkbox(
+                            value: _rememberMe,
+                            onChanged: (v) => setState(() => _rememberMe = v ?? false),
+                            activeColor: AppColors.primary600,
+                            side: const BorderSide(color: AppColors.primary600, width: 2),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Text('Ingat Saya', style: AppTypography.monoSmall),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Lupa password belum tersedia.')),
+                        );
+                      },
+                      child: Text(
+                        'Lupa Password?',
+                        style: AppTypography.monoSmall.copyWith(
+                          color: AppColors.primary600,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 SurvMarktButton(
