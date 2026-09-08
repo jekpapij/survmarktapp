@@ -18,6 +18,8 @@ class SurvMarktTextField extends StatefulWidget {
     this.hintText,
     this.maxLines = 1,
     this.onChanged,
+    this.isRequired = false,
+    this.readOnly = false,
   });
 
   final String label;
@@ -27,6 +29,20 @@ class SurvMarktTextField extends StatefulWidget {
   final String? Function(String?)? validator;
   final IconData? prefixIcon;
   final String? hintText;
+
+  /// Update 2026-09-08: tanda `*` merah di sebelah label — buat field
+  /// wajib diisi di frame `researcher-profile-edit` (get_design_context
+  /// node 77:2654), Figma-nya beneran nunjukin asterisk merah eksplisit
+  /// (beda dari `create-survey` yang nggak ada tanda ini sama sekali).
+  final bool isRequired;
+
+  /// Update 2026-09-08: field non-editable (mis. "Email" di
+  /// `researcher-profile-edit` — sengaja nggak bisa diubah dari sini).
+  /// Beda dari `TextFormField.enabled: false` (yang bikin teksnya keabuan
+  /// otomatis dari Material) — di sini teksnya tetep warna normal, cuma
+  /// background-nya abu-abu (`slate100`) & nggak bisa diketik, nyamain
+  /// persis visual Figma.
+  final bool readOnly;
 
   /// Update 2026-09-08: buat field textarea (mis. "Deskripsi" di form
   /// `create-survey`) — default 1 (single-line, perilaku lama nggak
@@ -66,14 +82,24 @@ class _SurvMarktTextFieldState extends State<SurvMarktTextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.label,
-          style: AppTypography.monoSmall.copyWith(fontSize: 14, fontWeight: FontWeight.bold),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              widget.label,
+              style: AppTypography.monoSmall.copyWith(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            if (widget.isRequired) ...[
+              const SizedBox(width: 2),
+              const Text('*', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
+            ],
+          ],
         ),
         const SizedBox(height: AppSpacing.xs),
         TextFormField(
           controller: widget.controller,
           obscureText: _obscure,
+          readOnly: widget.readOnly,
           keyboardType: widget.keyboardType,
           validator: widget.validator,
           onChanged: widget.onChanged,
@@ -97,7 +123,7 @@ class _SurvMarktTextFieldState extends State<SurvMarktTextField> {
                   )
                 : null,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: widget.readOnly ? AppColors.slate100 : Colors.white,
             contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 14),
             border: border,
             enabledBorder: border,

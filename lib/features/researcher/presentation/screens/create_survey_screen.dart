@@ -11,6 +11,7 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/survmarkt_app_bar.dart';
 import '../../../../core/widgets/survmarkt_bottom_nav.dart';
 import '../../../../core/widgets/survmarkt_button.dart';
+import '../../../../core/widgets/survmarkt_dropdown_field.dart';
 import '../../../../core/widgets/survmarkt_text_field.dart';
 import '../../../../router.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
@@ -375,21 +376,21 @@ class _CreateSurveyScreenState extends ConsumerState<CreateSurveyScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _DropdownField(
+          SurvMarktDropdownField(
             label: 'Gender',
             value: _gender,
             options: _genderOptions,
             onChanged: (v) => setState(() => _gender = v),
           ),
           const SizedBox(height: 14),
-          _DropdownField(
+          SurvMarktDropdownField(
             label: 'Usia',
             value: _ageRange,
             options: _ageOptions,
             onChanged: (v) => setState(() => _ageRange = v),
           ),
           const SizedBox(height: 14),
-          _DropdownField(
+          SurvMarktDropdownField(
             label: 'Status',
             value: _status,
             options: _statusOptions,
@@ -590,68 +591,7 @@ class _CostRow extends StatelessWidget {
   }
 }
 
-class _DropdownField extends StatelessWidget {
-  const _DropdownField({
-    required this.label,
-    required this.value,
-    required this.options,
-    required this.onChanged,
-  });
-
-  final String label;
-  final String value;
-  final List<String> options;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: AppTypography.monoSmall.copyWith(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.slate900),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFCBD5E1)),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButtonFormField<String>(
-              // `initialValue` (bukan `value`, deprecated sejak Flutter
-              // 3.33) — SDK project ini udah cukup baru buat pakai ini.
-              initialValue: value,
-              // Update 2026-09-08 (bugfix): `dropdownColor` WAJIB di-pin
-              // putih + tiap item dikasih style eksplisit — kalau nggak,
-              // popup menu-nya ngikut Theme ambient (Material 3 tonal
-              // palette / dark-mode sistem) dan bisa nongol gelap nggak
-              // kebaca, sesuai laporan user. Pola sama kayak fix yang
-              // udah dipakai di `role_select_field.dart`.
-              dropdownColor: Colors.white,
-              isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.slate400, size: 20),
-              style: AppTypography.monoSmall.copyWith(fontSize: 14, color: AppColors.slate900),
-              decoration: const InputDecoration(border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.symmetric(vertical: 10)),
-              items: [
-                for (final option in options)
-                  DropdownMenuItem(
-                    value: option,
-                    child: Text(
-                      option,
-                      style: AppTypography.monoSmall.copyWith(fontSize: 14, color: AppColors.slate900),
-                    ),
-                  ),
-              ],
-              onChanged: (v) {
-                if (v != null) onChanged(v);
-              },
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
+// Update 2026-09-08: `_DropdownField` privat dulu di sini udah diekstrak
+// jadi `SurvMarktDropdownField` (`core/widgets/survmarkt_dropdown_field.
+// dart`) — dipakai ulang lagi di `researcher_profile_edit_screen.dart`
+// (field "Peran"), lihat CLAUDE.md.

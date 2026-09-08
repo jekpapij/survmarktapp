@@ -30,6 +30,24 @@ abstract class AuthRemoteDataSource {
   });
 
   Future<void> logout();
+
+  // Update 2026-09-08: "Ubah Password"/"Lupa Password" self-designed —
+  // lihat catatan lengkap di `AuthRepository`.
+  Future<void> changePassword({required String oldPassword, required String newPassword});
+
+  Future<void> requestPasswordReset({required String identifier});
+
+  Future<void> resetPassword({required String identifier, required String newPassword});
+
+  // Update 2026-09-08: "Edit Profil" self-designed — lihat catatan di
+  // `AuthRepository`.
+  Future<UserModel> updateProfile({
+    required String name,
+    required String phone,
+    required String institution,
+    required String academicRole,
+    required String researchField,
+  });
 }
 
 /// Implementasi Dio — endpoint persis PROMPT_SPEC.md §3.1 & §8.
@@ -92,6 +110,65 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<void> logout() async {
     try {
       await _dio.post<void>(ApiConstants.logout);
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+  }
+
+  @override
+  Future<void> changePassword({required String oldPassword, required String newPassword}) async {
+    try {
+      await _dio.post<void>(
+        ApiConstants.changePassword,
+        data: {'oldPassword': oldPassword, 'newPassword': newPassword},
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+  }
+
+  @override
+  Future<void> requestPasswordReset({required String identifier}) async {
+    try {
+      await _dio.post<void>(ApiConstants.forgotPassword, data: {'identifier': identifier});
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+  }
+
+  @override
+  Future<void> resetPassword({required String identifier, required String newPassword}) async {
+    try {
+      await _dio.post<void>(
+        ApiConstants.resetPassword,
+        data: {'identifier': identifier, 'newPassword': newPassword},
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+  }
+
+  @override
+  Future<UserModel> updateProfile({
+    required String name,
+    required String phone,
+    required String institution,
+    required String academicRole,
+    required String researchField,
+  }) async {
+    try {
+      final response = await _dio.patch<Map<String, dynamic>>(
+        ApiConstants.updateProfile,
+        data: {
+          'name': name,
+          'phone': phone,
+          'institution': institution,
+          'academicRole': academicRole,
+          'researchField': researchField,
+        },
+      );
+      final data = response.data!;
+      return UserModel.fromJson(data['user'] as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _mapDioException(e);
     }

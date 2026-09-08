@@ -6,6 +6,7 @@ import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_datasource.dart';
 import '../datasources/auth_remote_datasource.dart';
+import '../models/user_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   const AuthRepositoryImpl({
@@ -100,6 +101,119 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(user);
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
+    }
+  }
+
+  // Update 2026-09-08: "Ubah Password"/"Lupa Password" self-designed —
+  // lihat catatan lengkap di `AuthRepository`. Pola try/catch-mapping-ke-
+  // Failure di bawah PERSIS sama kayak `login`/`register` di atas.
+
+  @override
+  Future<Either<Failure, void>> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _remoteDataSource.changePassword(oldPassword: oldPassword, newPassword: newPassword);
+      return const Right(null);
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on AuthException catch (e) {
+      return Left(AuthFailure(e.message));
+    } on ValidationException catch (e) {
+      return Left(ValidationFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (_) {
+      return const Left(ServerFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> requestPasswordReset({required String identifier}) async {
+    try {
+      await _remoteDataSource.requestPasswordReset(identifier: identifier);
+      return const Right(null);
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on ValidationException catch (e) {
+      return Left(ValidationFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (_) {
+      return const Left(ServerFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> resetPassword({
+    required String identifier,
+    required String newPassword,
+  }) async {
+    try {
+      await _remoteDataSource.resetPassword(identifier: identifier, newPassword: newPassword);
+      return const Right(null);
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on ValidationException catch (e) {
+      return Left(ValidationFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } catch (_) {
+      return const Left(ServerFailure());
+    }
+  }
+
+  // Update 2026-09-08: "Edit Profil" self-designed — lihat catatan
+  // lengkap di `AuthRepository`.
+  @override
+  Future<Either<Failure, UserEntity>> updateProfile({
+    required String name,
+    required String phone,
+    required String institution,
+    required String academicRole,
+    required String researchField,
+  }) async {
+    try {
+      final cachedUser = await _localDataSource.getCachedUser();
+      if (cachedUser == null) {
+        return const Left(AuthFailure('Sesi tidak ditemukan. Silakan login ulang.'));
+      }
+
+      final updated = await _remoteDataSource.updateProfile(
+        name: name,
+        phone: phone,
+        institution: institution,
+        academicRole: academicRole,
+        researchField: researchField,
+      );
+
+      // `id`/`email`/`role` SELALU dari cache (user yang beneran login),
+      // BUKAN dari datasource — `AuthRemoteDataSourceMock` stateless jadi
+      // balikin placeholder buat field itu (lihat catatan di sana); buat
+      // Dio impl beneran pun email/role emang nggak diedit dari form ini.
+      final merged = UserModel(
+        id: cachedUser.id,
+        name: updated.name,
+        email: cachedUser.email,
+        phone: updated.phone,
+        role: cachedUser.role,
+        institution: updated.institution,
+        academicRole: updated.academicRole,
+        researchField: updated.researchField,
+      );
+      await _localDataSource.updateCachedUser(merged);
+      return Right(merged);
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on ValidationException catch (e) {
+      return Left(ValidationFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
+    } catch (_) {
+      return const Left(ServerFailure());
     }
   }
 }

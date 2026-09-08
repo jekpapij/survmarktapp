@@ -22,6 +22,14 @@ import 'auth_remote_datasource.dart';
 /// - Login: password diisi persis `"salah"` -> AuthException.
 /// - Register: email diisi persis `"admin@survmarkt.com"` -> ValidationException
 ///   (simulasi "email sudah terdaftar").
+/// - Ubah Password: "Password Lama" diisi persis `"salah"` -> AuthException
+///   (pola sama kayak login).
+/// - Lupa Password (langkah 1): identifier diisi persis
+///   `"notfound@survmarkt.com"` -> ValidationException (simulasi "nggak
+///   terdaftar"). Langkah 2 (set password baru) SELALU sukses di mock —
+///   identifier-nya udah "divalidasi" di langkah 1.
+/// - Edit Profil: salah satu field wajib (Nama/HP/Peran/Institusi)
+///   dikosongin -> ValidationException.
 class AuthRemoteDataSourceMock implements AuthRemoteDataSource {
   const AuthRemoteDataSourceMock();
 
@@ -68,6 +76,63 @@ class AuthRemoteDataSourceMock implements AuthRemoteDataSource {
   @override
   Future<void> logout() async {
     await Future.delayed(_networkDelay);
+  }
+
+  @override
+  Future<void> changePassword({required String oldPassword, required String newPassword}) async {
+    await Future.delayed(_networkDelay);
+
+    if (oldPassword.trim().toLowerCase() == 'salah') {
+      throw const AuthException('Password lama salah.');
+    }
+  }
+
+  @override
+  Future<void> requestPasswordReset({required String identifier}) async {
+    await Future.delayed(_networkDelay);
+
+    if (identifier.trim().toLowerCase() == 'notfound@survmarkt.com') {
+      throw const ValidationException('Email/No. HP tidak terdaftar di SurvMarkt.');
+    }
+  }
+
+  @override
+  Future<void> resetPassword({required String identifier, required String newPassword}) async {
+    await Future.delayed(_networkDelay);
+    // Selalu sukses — identifier-nya udah "divalidasi" di langkah 1
+    // (requestPasswordReset). Nggak ada token/OTP beneran buat dicek di
+    // sini (di luar scope mock CPMK 3).
+  }
+
+  @override
+  Future<UserModel> updateProfile({
+    required String name,
+    required String phone,
+    required String institution,
+    required String academicRole,
+    required String researchField,
+  }) async {
+    await Future.delayed(_networkDelay);
+
+    if (name.trim().isEmpty || phone.trim().isEmpty || institution.trim().isEmpty || academicRole.trim().isEmpty) {
+      throw const ValidationException('Semua field wajib (*) harus diisi.');
+    }
+
+    // Mock ini STATELESS (const, nggak nyimpen sesi siapa yang lagi login —
+    // beda dari `ResearcherRemoteDataSourceMock` yang emang nyimpen state).
+    // id/email/role di bawah cuma PLACEHOLDER — `AuthRepositoryImpl` yang
+    // gabungin balik sama data asli dari cache lokal (lihat catatan di
+    // sana), jadi placeholder ini nggak pernah beneran ditampilin ke user.
+    return UserModel(
+      id: '',
+      name: name,
+      email: '',
+      phone: phone,
+      role: UserRole.peneliti,
+      institution: institution,
+      academicRole: academicRole,
+      researchField: researchField,
+    );
   }
 
   /// Heuristik simpel biar demo login bisa "masuk" sebagai role yang

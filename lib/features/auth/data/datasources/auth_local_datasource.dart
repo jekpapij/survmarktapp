@@ -15,6 +15,12 @@ abstract class AuthLocalDataSource {
 
   Future<UserModel?> getCachedUser();
 
+  /// Update 2026-09-08: overwrite CUMA bagian user di cache (bukan
+  /// token) — dipakai setelah "Edit Profil" sukses, biar data yang
+  /// ke-cache sinkron sama perubahan tanpa perlu login ulang / re-cache
+  /// token yang nggak berubah.
+  Future<void> updateCachedUser(UserModel user);
+
   Future<String?> getAccessToken();
 
   Future<void> clearSession();
@@ -56,6 +62,15 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       final raw = await _secureStorage.read(key: StorageKeys.cachedUser);
       if (raw == null) return null;
       return UserModel.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } catch (_) {
+      throw const CacheException();
+    }
+  }
+
+  @override
+  Future<void> updateCachedUser(UserModel user) async {
+    try {
+      await _secureStorage.write(key: StorageKeys.cachedUser, value: jsonEncode(user.toJson()));
     } catch (_) {
       throw const CacheException();
     }

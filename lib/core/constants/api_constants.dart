@@ -29,4 +29,18 @@ class ApiConstants {
   static const String register = '/auth/register';
   static const String refresh = '/auth/refresh';
   static const String logout = '/auth/logout';
+
+  // Update 2026-09-08: 3 endpoint TAMBAHAN di luar PROMPT_SPEC.md §8 —
+  // "Ubah Password"/"Lupa Password" self-designed (nggak ada frame Figma
+  // referensi, sama kayak fitur Notifikasi), jadi path-nya nebak sendiri
+  // ngikutin konvensi REST yang sama kayak endpoint auth lain. Sesuaikan
+  // kalau ternyata backend beneran (kerjaan Ammar) udah punya nama path
+  // yang beda pas integrasi CPMK 5.
+  static const String changePassword = '/auth/change-password';
+  static const String forgotPassword = '/auth/forgot-password';
+  static const String resetPassword = '/auth/reset-password';
+
+  // Update 2026-09-08: "Edit Profil" self-designed (frame Figma
+  // `researcher-profile-edit`, di luar PROMPT_SPEC.md §8 juga).
+  static const String updateProfile = '/auth/profile';
 }

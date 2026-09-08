@@ -80,4 +80,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await _logoutUseCase(const NoParams());
     state = const AuthState.unauthenticated();
   }
+
+  /// Update 2026-09-08: sinkronin state IN-MEMORY setelah "Edit Profil"
+  /// sukses — dipanggil dari `ResearcherProfileEditScreen` abis
+  /// `AuthRepository.updateProfile(...)` balikin `UserEntity` baru. Beda
+  /// dari `login`/`register`/`checkAuthStatus`, ini BUKAN lewat UseCase
+  /// (mutation 1x-jalan langsung dari repository, pola sama kayak
+  /// `create-survey`) — cuma perlu nyuntikkan hasilnya ke `state` biar
+  /// layar Profil ke-rebuild otomatis tanpa perlu restart app/login ulang
+  /// (cache lokal-nya sendiri udah diupdate di repository impl).
+  void updateUser(UserEntity user) {
+    if (state.status != AuthStatus.authenticated) return;
+    state = AuthState.authenticated(user);
+  }
 }

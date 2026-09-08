@@ -11,6 +11,8 @@ class UserModel extends UserEntity {
     required super.phone,
     required super.role,
     super.institution,
+    super.academicRole,
+    super.researchField,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -21,9 +23,11 @@ class UserModel extends UserEntity {
       phone: json['phone'] as String? ?? '',
       role: UserRoleX.fromApiValue(json['role'] as String),
       // `?? ''` — backward-compatible sama cache lama (secure storage) dari
-      // sebelum field `institution` ada, biar user yang udah login duluan
+      // sebelum field-field ini ada, biar user yang udah login duluan
       // nggak crash pas app di-update.
       institution: json['institution'] as String? ?? '',
+      academicRole: json['academicRole'] as String? ?? '',
+      researchField: json['researchField'] as String? ?? '',
     );
   }
 
@@ -34,5 +38,7 @@ class UserModel extends UserEntity {
         'phone': phone,
         'role': role.apiValue,
         'institution': institution,
+        'academicRole': academicRole,
+        'researchField': researchField,
       };
 }

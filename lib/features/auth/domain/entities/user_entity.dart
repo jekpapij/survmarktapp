@@ -38,6 +38,8 @@ class UserEntity extends Equatable {
     required this.phone,
     required this.role,
     this.institution = '',
+    this.academicRole = '',
+    this.researchField = '',
   });
 
   final String id;
@@ -54,6 +56,39 @@ class UserEntity extends Equatable {
   // sampai ada fitur "Edit Profil" yang bisa isi/ubah field ini.
   final String institution;
 
+  // Update 2026-09-08: 2 field baru buat card "Afiliasi" di frame Figma
+  // `researcher-profile-edit` (node 77:2654). PENTING — "Peran" di frame
+  // ini BUKAN `UserRole` (peneliti/responden/admin, yang nentuin
+  // dashboard/routing) — itu udah kepake di tempat lain & nggak masuk akal
+  // diubah bebas dari form ini. Dibaca sebagai status akademik/profesional
+  // TAMBAHAN di dalam institusi (mis. "Dosen"/"Mahasiswa"/"Peneliti
+  // Independen") — konsep baru, disimpan terpisah sebagai `academicRole`
+  // (String bebas, bukan enum, pola sama kayak dropdown targeting di
+  // `create-survey`). `researchField` = "Bidang Penelitian / Jurusan",
+  // opsional (nggak ada tanda `*` di Figma).
+  final String academicRole;
+  final String researchField;
+
+  UserEntity copyWith({
+    String? name,
+    String? phone,
+    String? institution,
+    String? academicRole,
+    String? researchField,
+  }) {
+    return UserEntity(
+      id: id,
+      name: name ?? this.name,
+      email: email,
+      phone: phone ?? this.phone,
+      role: role,
+      institution: institution ?? this.institution,
+      academicRole: academicRole ?? this.academicRole,
+      researchField: researchField ?? this.researchField,
+    );
+  }
+
   @override
-  List<Object?> get props => [id, name, email, phone, role, institution];
+  List<Object?> get props =>
+      [id, name, email, phone, role, institution, academicRole, researchField];
 }

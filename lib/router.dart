@@ -4,11 +4,15 @@ import 'package:go_router/go_router.dart';
 
 import 'core/constants/app_colors.dart';
 import 'features/auth/domain/entities/user_entity.dart';
+import 'features/auth/presentation/screens/change_password_screen.dart';
+import 'features/auth/presentation/screens/forgot_password_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
+import 'features/auth/presentation/screens/reset_password_screen.dart';
 import 'features/notifications/presentation/screens/notifications_screen.dart';
 import 'features/researcher/presentation/screens/create_survey_screen.dart';
 import 'features/researcher/presentation/screens/researcher_dashboard_screen.dart';
+import 'features/researcher/presentation/screens/researcher_profile_edit_screen.dart';
 import 'features/researcher/presentation/screens/researcher_profile_screen.dart';
 import 'features/researcher/presentation/screens/researcher_wallet_screen.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
@@ -21,6 +25,14 @@ abstract class AppRoutes {
   static const splash = '/splash';
   static const login = '/login';
   static const register = '/register';
+
+  // Update 2026-09-08: "Ubah Password"/"Lupa Password" self-designed
+  // (nggak ada frame Figma, lihat CLAUDE.md) — lintas-role kayak
+  // `notifications` (bukan di-nest di bawah `/researcher/...`), karena
+  // ubah password sama aja buat semua role.
+  static const changePassword = '/account/change-password';
+  static const forgotPassword = '/forgot-password';
+  static const resetPassword = '/reset-password';
 
   // Update 2026-09-08: lintas-role (bukan spesifik researcher/respondent/
   // admin) — bell icon di app-bar tiap role bakal nunjuk ke sini juga
@@ -35,6 +47,10 @@ abstract class AppRoutes {
   static const createSurvey = '/researcher/create-survey';
   static const researcherWallet = '/researcher/wallet';
   static const researcherProfile = '/researcher/profile';
+
+  // Update 2026-09-08: bukan placeholder lagi — frame Figma
+  // `researcher-profile-edit` (node 77:2654), lihat CLAUDE.md.
+  static const researcherProfileEdit = '/researcher/profile/edit';
   static const respondentHome = '/respondent/home';
   static const adminHome = '/admin/home';
 
@@ -52,6 +68,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.splash, builder: (context, state) => const SplashScreen()),
       GoRoute(path: AppRoutes.login, builder: (context, state) => const LoginScreen()),
       GoRoute(path: AppRoutes.register, builder: (context, state) => const RegisterScreen()),
+      // Update 2026-09-08: "Ubah Password"/"Lupa Password" self-designed —
+      // lihat CLAUDE.md.
+      GoRoute(
+        path: AppRoutes.changePassword,
+        builder: (context, state) => const ChangePasswordScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.resetPassword,
+        // `extra` dari ForgotPasswordScreen (String identifier) — bukan
+        // token/OTP beneran, lihat catatan di ResetPasswordScreen.
+        builder: (context, state) => ResetPasswordScreen(identifier: state.extra as String? ?? ''),
+      ),
       // Update 2026-09-08: bukan placeholder lagi — udah ditranslate dari
       // frame Figma `researcher-dashboard`, lihat CLAUDE.md.
       GoRoute(
@@ -75,6 +107,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.researcherProfile,
         builder: (context, state) => const ResearcherProfileScreen(),
+      ),
+      // Update 2026-09-08: bukan placeholder lagi — udah ditranslate dari
+      // frame Figma `researcher-profile-edit`, lihat CLAUDE.md.
+      GoRoute(
+        path: AppRoutes.researcherProfileEdit,
+        builder: (context, state) => const ResearcherProfileEditScreen(),
       ),
       GoRoute(
         path: AppRoutes.notifications,

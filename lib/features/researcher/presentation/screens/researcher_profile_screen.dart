@@ -57,15 +57,19 @@ class ResearcherProfileScreen extends ConsumerWidget {
                   : _ProfileBody(
                       user: user,
                       dashboardAsync: dashboardAsync,
-                      onEditProfil: () => _showStub(
-                        context,
-                        'Edit Profil (frame Figma berikutnya) — nyusul sebentar lagi.',
-                      ),
+                      // Update 2026-09-08: bukan stub lagi — beneran buka
+                      // layar "Edit Profil" (frame Figma
+                      // `researcher-profile-edit`, lihat CLAUDE.md).
+                      onEditProfil: () => context.push(AppRoutes.researcherProfileEdit),
                       onMenuStub: (label) => _showStub(
                         context,
                         '$label belum ada frame Figma-nya — di luar cakupan 16 frame MVP.',
                       ),
                       onNotifikasiTap: () => context.push(AppRoutes.notifications),
+                      // Update 2026-09-08: bukan stub lagi — beneran buka
+                      // layar "Ubah Password" (self-designed, mock, lihat
+                      // CLAUDE.md).
+                      onUbahPasswordTap: () => context.push(AppRoutes.changePassword),
                       onLogout: () {
                         ref.read(authNotifierProvider.notifier).logout();
                         ScaffoldMessenger.of(context)
@@ -143,6 +147,7 @@ class _ProfileBody extends StatelessWidget {
     required this.onEditProfil,
     required this.onMenuStub,
     required this.onNotifikasiTap,
+    required this.onUbahPasswordTap,
     required this.onLogout,
   });
 
@@ -151,6 +156,7 @@ class _ProfileBody extends StatelessWidget {
   final VoidCallback onEditProfil;
   final ValueChanged<String> onMenuStub;
   final VoidCallback onNotifikasiTap;
+  final VoidCallback onUbahPasswordTap;
   final VoidCallback onLogout;
 
   @override
@@ -191,7 +197,7 @@ class _ProfileBody extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           _MenuListCard(
             onEditProfil: onEditProfil,
-            onUbahPassword: () => onMenuStub('Ubah Password'),
+            onUbahPassword: onUbahPasswordTap,
             onNotifikasi: onNotifikasiTap,
             onBantuan: () => onMenuStub('Bantuan'),
             onSyaratKetentuan: () => onMenuStub('Syarat & Ketentuan'),
@@ -239,6 +245,16 @@ class _ProfileHeaderCard extends StatelessWidget {
         ],
       ),
       child: Stack(
+        // Fix 2026-09-08 (laporan user): "card foto profil mencong ke
+        // kiri". Penyebab: `Column` non-`Positioned` di dalam `Stack`
+        // shrink-wrap ke lebar children terlebarnya (BUKAN otomatis full
+        // lebar Stack kayak Column biasa) — jadi meski `crossAxisAlignment`
+        // Column-nya `center` (default), si Column ITU SENDIRI ditempatkan
+        // di `Stack.alignment` default (`topStart` = kiri atas), bukan
+        // tengah. `alignment: Alignment.topCenter` nge-center Column secara
+        // horizontal (tetap nempel atas biar konsisten sama posisi pensil
+        // di `Positioned(top: -8, right: -8)`).
+        alignment: Alignment.topCenter,
         children: [
           Column(
             mainAxisSize: MainAxisSize.min,

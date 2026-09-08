@@ -157,11 +157,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
                     ),
                     GestureDetector(
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Lupa password belum tersedia.')),
-                        );
-                      },
+                      // Update 2026-09-08: bukan stub lagi — beneran buka
+                      // alur "Lupa Password" (self-designed, mock, lihat
+                      // CLAUDE.md).
+                      onTap: () => context.push(AppRoutes.forgotPassword),
                       child: Text(
                         'Lupa Password?',
                         style: AppTypography.monoSmall.copyWith(
