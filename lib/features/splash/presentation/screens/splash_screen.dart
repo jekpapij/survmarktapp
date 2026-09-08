@@ -150,6 +150,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                     const SizedBox(height: 16),
                     Text(
                       'SurvMarkt Initiative © 2026',
+                      // Update 2026-09-08: efek samping fix overflow badge
+                      // di atas — Column footer sekarang di-stretch full
+                      // width, jadi Text ini butuh textAlign.center eksplisit
+                      // (defaultnya rata kiri), kalau nggak keliatan geser
+                      // ke kiri kayak yang user notice.
+                      textAlign: TextAlign.center,
                       style: AppTypography.monoSmall.copyWith(
                         color: const Color(0xFF818CF8).withValues(alpha: 0.6),
                         fontSize: 12,
