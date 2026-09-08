@@ -7,6 +7,7 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/metric_card.dart';
+import '../../../../core/widgets/survmarkt_app_bar.dart';
 import '../../../../core/widgets/survmarkt_bottom_nav.dart';
 import '../../../../router.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -35,11 +36,17 @@ class ResearcherDashboardScreen extends ConsumerWidget {
         bottom: false,
         child: Column(
           children: [
-            // Update 2026-09-08: bell icon sekarang beneran buka layar
-            // "Notifikasi" (`context.push` biar tombol back natural balik
-            // ke sini), bukan stub SnackBar lagi — lihat CLAUDE.md soal
-            // fitur notifikasi yang di-self-design (nggak ada frame Figma).
-            _AppBar(onBellTap: () => context.push(AppRoutes.notifications)),
+            // Update 2026-09-08: pakai `SurvMarktAppBar` reusable (dulunya
+            // `_AppBar` privat di sini, diekstrak ke `core/widgets/` biar
+            // dipakai ulang persis sama di `create_survey_screen.dart`).
+            // Bell icon beneran buka layar "Notifikasi" (`context.push`
+            // biar tombol back natural balik ke sini), bukan stub SnackBar
+            // lagi — lihat CLAUDE.md soal fitur notifikasi self-designed.
+            SurvMarktAppBar(
+              eyebrow: 'DASHBOARD',
+              unreadCount: ref.watch(unreadNotificationCountProvider),
+              onBellTap: () => context.push(AppRoutes.notifications),
+            ),
             Expanded(
               child: dashboardAsync.when(
                 loading: () => const Center(
@@ -86,20 +93,28 @@ class ResearcherDashboardScreen extends ConsumerWidget {
         ],
         onTap: (index) {
           if (index == 0) return;
+          // Update 2026-09-08: tab "Buat Survei" (index 1) sekarang beneran
+          // buka layar `create-survey` (`context.push` biar tombol back di
+          // layar itu balik natural ke sini).
+          if (index == 1) {
+            context.push(AppRoutes.createSurvey);
+            return;
+          }
+          // Update 2026-09-08: tab "Wallet" (index 2) sekarang beneran
+          // buka layar `researcher-wallet`.
+          if (index == 2) {
+            context.push(AppRoutes.researcherWallet);
+            return;
+          }
           // Update 2026-09-08: tab Profil (index 3) sengaja udah bisa
           // logout beneran walau layarnya sendiri belum dibangun — Profil
           // emang rencananya jadi tempat tombol logout (lihat CLAUDE.md
           // "Bottom nav per role"), dan user butuh cara buat balik ke
           // login pas testing (session ke-cache via "Ingat Saya"/secure
           // storage, jadi splash bakal auto-login terus tanpa ini).
-          if (index == 3) {
-            ref.read(authNotifierProvider.notifier).logout();
-            _showStub(context, 'Profil belum tersedia — logout dulu ya.');
-            context.go(AppRoutes.login);
-            return;
-          }
-          const labels = ['Dashboard', 'Buat Survei', 'Wallet', 'Profil'];
-          _showStub(context, '${labels[index]} belum tersedia.');
+          ref.read(authNotifierProvider.notifier).logout();
+          _showStub(context, 'Profil belum tersedia — logout dulu ya.');
+          context.go(AppRoutes.login);
         },
       ),
     );
@@ -107,94 +122,6 @@ class ResearcherDashboardScreen extends ConsumerWidget {
 
   void _showStub(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-  }
-}
-
-class _AppBar extends ConsumerWidget {
-  const _AppBar({required this.onBellTap});
-
-  final VoidCallback onBellTap;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Update 2026-09-08: badge titik merah dihitung dari
-    // `unreadNotificationCountProvider` (turunan dari `notificationsProvider`
-    // yang sama, bukan fetch terpisah) — lihat CLAUDE.md.
-    final unreadCount = ref.watch(unreadNotificationCountProvider);
-
-    return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      color: AppColors.primary900,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'DASHBOARD',
-                style: AppTypography.eyebrow.copyWith(
-                  color: const Color(0xFFA5B4FC),
-                  fontSize: 10,
-                ),
-              ),
-              Text(
-                'SurvMarkt',
-                style: AppTypography.displayMedium.copyWith(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          GestureDetector(
-            onTap: onBellTap,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: const Icon(Icons.notifications_none_rounded, size: 18, color: Colors.white),
-                ),
-                if (unreadCount > 0)
-                  Positioned(
-                    top: -2,
-                    right: -2,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                      constraints: const BoxConstraints(minWidth: 16),
-                      decoration: BoxDecoration(
-                        color: AppColors.danger,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.primary900, width: 1.5),
-                      ),
-                      child: Text(
-                        unreadCount > 9 ? '9+' : '$unreadCount',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontFamily: 'JetBrainsMono',
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 

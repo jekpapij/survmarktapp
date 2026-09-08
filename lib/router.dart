@@ -7,7 +7,9 @@ import 'features/auth/domain/entities/user_entity.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/notifications/presentation/screens/notifications_screen.dart';
+import 'features/researcher/presentation/screens/create_survey_screen.dart';
 import 'features/researcher/presentation/screens/researcher_dashboard_screen.dart';
+import 'features/researcher/presentation/screens/researcher_wallet_screen.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
 
 /// Route constants — SCREAMING_SNAKE_CASE per PROMPT_SPEC.md §2.3 (di sini
@@ -29,6 +31,8 @@ abstract class AppRoutes {
   // researcher/respondent/admin diimplementasi (di luar scope translate
   // auth ini).
   static const researcherHome = '/researcher/home';
+  static const createSurvey = '/researcher/create-survey';
+  static const researcherWallet = '/researcher/wallet';
   static const respondentHome = '/respondent/home';
   static const adminHome = '/admin/home';
 
@@ -51,6 +55,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.researcherHome,
         builder: (context, state) => const ResearcherDashboardScreen(),
+      ),
+      // Update 2026-09-08: bukan placeholder lagi — udah ditranslate dari
+      // frame Figma `create-survey`, lihat CLAUDE.md.
+      GoRoute(
+        path: AppRoutes.createSurvey,
+        builder: (context, state) => const CreateSurveyScreen(),
+      ),
+      // Update 2026-09-08: bukan placeholder lagi — udah ditranslate dari
+      // frame Figma `researcher-wallet`, lihat CLAUDE.md.
+      GoRoute(
+        path: AppRoutes.researcherWallet,
+        builder: (context, state) => const ResearcherWalletScreen(),
       ),
       GoRoute(
         path: AppRoutes.notifications,

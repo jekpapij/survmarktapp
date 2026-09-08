@@ -1,3 +1,5 @@
+import '../../../../core/errors/exceptions.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../domain/entities/dashboard_stats_entity.dart';
 import '../../domain/entities/survey_entity.dart';
 import 'researcher_remote_datasource.dart';
@@ -20,6 +22,10 @@ class ResearcherRemoteDataSourceMock implements ResearcherRemoteDataSource {
   static const _networkDelay = Duration(milliseconds: 700);
 
   final List<SurveyEntity> _surveys;
+
+  // Counter buat generate id survey baru dari `createSurvey` — mulai dari
+  // panjang seed biar nggak pernah tabrakan sama id seed (`survey-1`..`4`).
+  int _nextSurveyNumber = _seedSurveys.length + 1;
 
   // Tanggal seed relatif ke "hari ini" mock (2026-09-08) biar `metaText`
   // statis ("Deadline: 12 hari lagi", dst.) tetep konsisten sama
@@ -140,5 +146,54 @@ class ResearcherRemoteDataSourceMock implements ResearcherRemoteDataSource {
       throw StateError('Survey dengan id "$surveyId" tidak ditemukan.');
     }
     _surveys[index] = _surveys[index].copyWith(status: SurveyStatus.deleted);
+  }
+
+  @override
+  Future<SurveyEntity> createSurvey({
+    required String title,
+    required String category,
+    required String description,
+    required String surveyLink,
+    required int durationMinutes,
+    required int incentiveAmount,
+    required int targetCount,
+    required String targetLabel,
+    required DateTime deadlineDate,
+    required bool featured,
+  }) async {
+    await Future.delayed(_networkDelay);
+    if (title.trim().isEmpty) {
+      throw const ValidationException('Judul survei wajib diisi.');
+    }
+    if (targetCount <= 0) {
+      throw const ValidationException('Jumlah responden harus lebih dari 0.');
+    }
+    if (surveyLink.trim().isEmpty) {
+      throw const ValidationException('Link survei wajib diisi.');
+    }
+
+    final survey = SurveyEntity(
+      id: 'survey-${_nextSurveyNumber++}',
+      title: title.trim(),
+      category: category,
+      description: description.trim(),
+      surveyLink: surveyLink.trim(),
+      status: SurveyStatus.open,
+      durationMinutes: durationMinutes,
+      incentiveAmount: incentiveAmount,
+      targetLabel: targetLabel,
+      deadlineDate: deadlineDate,
+      // Survey baru lahir tanpa data — belum ada responden/view/konversi.
+      respondentCount: 0,
+      targetCount: targetCount,
+      views: 0,
+      conversionPercent: 0,
+      metaKind: SurveyMetaKind.deadline,
+      metaText: 'Deadline: ${Formatters.relativeDays(deadlineDate)}',
+      featured: featured,
+    );
+    // Taruh paling atas biar langsung keliatan di dashboard abis dibuat.
+    _surveys.insert(0, survey);
+    return survey;
   }
 }

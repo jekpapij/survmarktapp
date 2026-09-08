@@ -35,6 +35,8 @@ class SurveyEntity extends Equatable {
     required this.metaText,
     this.featured = false,
     this.expiringSoon = false,
+    this.description = '',
+    this.surveyLink = '',
   });
 
   final String id;
@@ -62,6 +64,14 @@ class SurveyEntity extends Equatable {
   /// Featured Survey (monetisasi sekunder).
   final bool featured;
   final bool expiringSoon;
+
+  // Update 2026-09-08: 2 field baru buat nyakup form `create-survey` (get_
+  // design_context node 77:2097) — dikasih default '' (bukan required) biar
+  // 4 seed survey lama nggak perlu diubah. Dipakai baca-tulis penuh, tapi
+  // belum ditampilin di manapun sampai UI relevan (modal Kelola Survey)
+  // dikasih section buat nampilinnya kalau nggak kosong.
+  final String description;
+  final String surveyLink;
 
   /// 0-100, dipakai buat progress bar "X% Terisi" (dashboard card) & "X/Y
   /// (Z%)" (detail modal). Diturunin dari `respondentCount`/`targetCount`,
@@ -91,6 +101,8 @@ class SurveyEntity extends Equatable {
       metaText: metaText ?? this.metaText,
       featured: featured,
       expiringSoon: expiringSoon,
+      description: description,
+      surveyLink: surveyLink,
     );
   }
 
@@ -112,5 +124,7 @@ class SurveyEntity extends Equatable {
         metaText,
         featured,
         expiringSoon,
+        description,
+        surveyLink,
       ];
 }

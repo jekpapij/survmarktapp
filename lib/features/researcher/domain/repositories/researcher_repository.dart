@@ -18,4 +18,21 @@ abstract class ResearcherRepository {
   /// audit (bukan dihapus fisik dari list), dan otomatis ke-filter keluar
   /// dari `getSurveys()`.
   Future<void> deleteSurvey(String surveyId);
+
+  /// Update 2026-09-08: buat form `create-survey` (get_design_context node
+  /// 77:2097). Survey baru selalu lahir `SurveyStatus.open`,
+  /// `respondentCount`/`views`/`conversionPercent` mulai dari 0 — belum ada
+  /// data karena baru dibuat.
+  Future<SurveyEntity> createSurvey({
+    required String title,
+    required String category,
+    required String description,
+    required String surveyLink,
+    required int durationMinutes,
+    required int incentiveAmount,
+    required int targetCount,
+    required String targetLabel,
+    required DateTime deadlineDate,
+    required bool featured,
+  });
 }

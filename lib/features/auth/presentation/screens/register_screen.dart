@@ -195,13 +195,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         child: RichText(
                           text: TextSpan(
                             style: AppTypography.monoSmall.copyWith(fontSize: 12, fontWeight: FontWeight.w400),
-                            children: [
-                              const TextSpan(text: 'Saya menyetujui '),
-                              const TextSpan(
+                            children: const [
+                              TextSpan(text: 'Saya menyetujui '),
+                              TextSpan(
                                 text: 'Syarat & Ketentuan',
                                 style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary600),
                               ),
-                              const TextSpan(text: ' yang berlaku'),
+                              TextSpan(text: ' yang berlaku'),
                             ],
                           ),
                         ),

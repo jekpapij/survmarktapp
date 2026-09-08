@@ -13,4 +13,17 @@ abstract class ResearcherRemoteDataSource {
   Future<void> updateSurveyStatus(String surveyId, SurveyStatus status);
 
   Future<void> deleteSurvey(String surveyId);
+
+  Future<SurveyEntity> createSurvey({
+    required String title,
+    required String category,
+    required String description,
+    required String surveyLink,
+    required int durationMinutes,
+    required int incentiveAmount,
+    required int targetCount,
+    required String targetLabel,
+    required DateTime deadlineDate,
+    required bool featured,
+  });
 }

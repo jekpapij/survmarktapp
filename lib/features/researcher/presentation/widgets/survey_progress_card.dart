@@ -101,7 +101,7 @@ class SurveyProgressCard extends StatelessWidget {
             fontWeight: FontWeight.w600,
           )
         else if (_isPaused)
-          StatusBadge(label: 'PAUSED', background: const Color(0xFFFEF3C7), foreground: AppColors.amber500)
+          const StatusBadge(label: 'PAUSED', background: Color(0xFFFEF3C7), foreground: AppColors.amber500)
         else
           const StatusBadge(label: 'OPEN', background: Color(0xFFD1FAE5), foreground: Color(0xFF047857)),
       ],
@@ -119,9 +119,9 @@ class SurveyProgressCard extends StatelessWidget {
         ),
         if (survey.expiringSoon) ...[
           const SizedBox(width: AppSpacing.xs),
-          StatusBadge(
+          const StatusBadge(
             label: 'Expiring Soon',
-            background: const Color(0xFFFFDBDB),
+            background: Color(0xFFFFDBDB),
             foreground: AppColors.amber500,
             fontSize: 10,
           ),

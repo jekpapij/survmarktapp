@@ -16,6 +16,8 @@ class SurvMarktTextField extends StatefulWidget {
     this.validator,
     this.prefixIcon,
     this.hintText,
+    this.maxLines = 1,
+    this.onChanged,
   });
 
   final String label;
@@ -25,6 +27,15 @@ class SurvMarktTextField extends StatefulWidget {
   final String? Function(String?)? validator;
   final IconData? prefixIcon;
   final String? hintText;
+
+  /// Update 2026-09-08: buat field textarea (mis. "Deskripsi" di form
+  /// `create-survey`) — default 1 (single-line, perilaku lama nggak
+  /// berubah). Textarea beneran pakai `maxLines` >1 + `alignLabelWithHint`.
+  final int maxLines;
+
+  /// Opsional — buat field yang butuh recalculate tampilan lain secara live
+  /// pas diketik (mis. kalkulator insentif di `create-survey`).
+  final ValueChanged<String>? onChanged;
 
   @override
   State<SurvMarktTextField> createState() => _SurvMarktTextFieldState();
@@ -65,10 +76,13 @@ class _SurvMarktTextFieldState extends State<SurvMarktTextField> {
           obscureText: _obscure,
           keyboardType: widget.keyboardType,
           validator: widget.validator,
+          onChanged: widget.onChanged,
+          maxLines: widget.obscureText ? 1 : widget.maxLines,
           style: AppTypography.monoSmall.copyWith(fontSize: 14, color: AppColors.slate900),
           decoration: InputDecoration(
             hintText: widget.hintText,
             hintStyle: AppTypography.monoSmall.copyWith(fontSize: 14, color: AppColors.slate400),
+            alignLabelWithHint: widget.maxLines > 1,
             prefixIcon: widget.prefixIcon != null
                 ? Icon(widget.prefixIcon, color: AppColors.slate400, size: 20)
                 : null,

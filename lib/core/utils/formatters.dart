@@ -21,6 +21,20 @@ class Formatters {
     return 'Rp ${amount.toStringAsFixed(0)}';
   }
 
+  /// `1200000` -> `Rp 1.200.000` (pemisah ribuan pakai TITIK, gaya Rupiah
+  /// Indonesia) — beda dari [rupiahShort] yang disingkat ("jt"/"rb"). Dipakai
+  /// buat breakdown biaya di kalkulator `create-survey` (get_design_context
+  /// node 77:2168-2181) yang butuh nominal EXACT, bukan disingkat.
+  static String rupiahFull(int amount) {
+    final str = amount.abs().toString();
+    final buffer = StringBuffer();
+    for (var i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) buffer.write('.');
+      buffer.write(str[i]);
+    }
+    return 'Rp ${amount < 0 ? '-' : ''}$buffer';
+  }
+
   /// `1840` -> `1,840` (pemisah ribuan pakai koma, sesuai contoh di Figma
   /// `TARGET RESPONDEN` -> `1,840`).
   static String thousands(int value) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -117,6 +118,16 @@ class _KelolaSurveyModalState extends ConsumerState<KelolaSurveyModal> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _InfoGrid(survey: survey),
+                          // Update 2026-09-08: survey yang dibuat lewat form
+                          // `create-survey` sekarang bawa `description`/
+                          // `surveyLink` (lihat CLAUDE.md) — ditampilin di
+                          // sini kalau ada isinya. 4 survey seed lama nggak
+                          // punya (default '' dari entity), jadi otomatis
+                          // nggak nongol section-nya buat mereka.
+                          if (survey.description.isNotEmpty || survey.surveyLink.isNotEmpty) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            _DetailInfoCard(survey: survey),
+                          ],
                           const SizedBox(height: AppSpacing.sm),
                           _DeadlineCard(survey: survey),
                           const SizedBox(height: AppSpacing.sm),
@@ -312,6 +323,70 @@ class _InfoItem extends StatelessWidget {
           style: AppTypography.displaySmall.copyWith(color: AppColors.slate900, fontSize: 14),
         ),
       ],
+    );
+  }
+}
+
+/// Card "Deskripsi"/"Link Survei" — cuma nongol kalau survey punya salah
+/// satu (lihat pengecekan `isNotEmpty` di caller). Link-nya bisa di-tap
+/// buat copy ke clipboard, biar peneliti gampang share ulang link Google
+/// Form-nya dari sini tanpa harus buka `create-survey` lagi.
+class _DetailInfoCard extends StatelessWidget {
+  const _DetailInfoCard({required this.survey});
+
+  final SurveyEntity survey;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (survey.description.isNotEmpty) ...[
+            Text(
+              'DESKRIPSI',
+              style: AppTypography.eyebrowMuted.copyWith(fontSize: 9, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              survey.description,
+              style: AppTypography.bodyMedium.copyWith(fontSize: 13, color: AppColors.slate600),
+            ),
+          ],
+          if (survey.description.isNotEmpty && survey.surveyLink.isNotEmpty)
+            const SizedBox(height: AppSpacing.sm),
+          if (survey.surveyLink.isNotEmpty) ...[
+            Text(
+              'LINK SURVEI',
+              style: AppTypography.eyebrowMuted.copyWith(fontSize: 9, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            InkWell(
+              onTap: () async {
+                await Clipboard.setData(ClipboardData(text: survey.surveyLink));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(const SnackBar(content: Text('Link disalin ke clipboard.')));
+                }
+              },
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      survey.surveyLink,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.monoSmall.copyWith(fontSize: 12, color: AppColors.indigoAccent),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.copy_rounded, size: 14, color: AppColors.indigoAccent),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

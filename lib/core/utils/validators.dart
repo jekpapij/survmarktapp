@@ -48,4 +48,23 @@ class Validators {
     if (value != original) return 'Konfirmasi password tidak cocok';
     return null;
   }
+
+  // Update 2026-09-08: buat form `create-survey` — generik, dipakai ulang
+  // buat beberapa field beda (judul, link) yang cuma butuh "wajib diisi".
+  static String? required(String? value, String fieldLabel) {
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) return '$fieldLabel wajib diisi';
+    return null;
+  }
+
+  /// Buat field numerik yang harus > 0 (Jumlah Responden, Estimasi Waktu,
+  /// Nominal Insentif).
+  static String? positiveNumber(String? value, String fieldLabel) {
+    final v = value?.trim() ?? '';
+    if (v.isEmpty) return '$fieldLabel wajib diisi';
+    final n = int.tryParse(v);
+    if (n == null) return '$fieldLabel harus berupa angka';
+    if (n <= 0) return '$fieldLabel harus lebih dari 0';
+    return null;
+  }
 }

@@ -153,7 +153,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
-                        Text('Ingat Saya', style: AppTypography.monoSmall),
+                        const Text('Ingat Saya', style: AppTypography.monoSmall),
                       ],
                     ),
                     GestureDetector(

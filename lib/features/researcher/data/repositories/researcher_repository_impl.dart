@@ -25,4 +25,30 @@ class ResearcherRepositoryImpl implements ResearcherRepository {
 
   @override
   Future<void> deleteSurvey(String surveyId) => _remoteDataSource.deleteSurvey(surveyId);
+
+  @override
+  Future<SurveyEntity> createSurvey({
+    required String title,
+    required String category,
+    required String description,
+    required String surveyLink,
+    required int durationMinutes,
+    required int incentiveAmount,
+    required int targetCount,
+    required String targetLabel,
+    required DateTime deadlineDate,
+    required bool featured,
+  }) =>
+      _remoteDataSource.createSurvey(
+        title: title,
+        category: category,
+        description: description,
+        surveyLink: surveyLink,
+        durationMinutes: durationMinutes,
+        incentiveAmount: incentiveAmount,
+        targetCount: targetCount,
+        targetLabel: targetLabel,
+        deadlineDate: deadlineDate,
+        featured: featured,
+      );
 }

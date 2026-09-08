@@ -131,14 +131,14 @@ class _NotificationList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (notifications.isEmpty) {
-      return Center(
+      return const Center(
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: EdgeInsets.all(AppSpacing.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.notifications_none_rounded, size: 40, color: AppColors.slate400),
-              const SizedBox(height: AppSpacing.sm),
+              Icon(Icons.notifications_none_rounded, size: 40, color: AppColors.slate400),
+              SizedBox(height: AppSpacing.sm),
               Text('Belum ada notifikasi.', style: AppTypography.bodyMedium),
             ],
           ),
