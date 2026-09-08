@@ -101,26 +101,42 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 ),
                 Column(
                   mainAxisSize: MainAxisSize.min,
+                  // Update 2026-09-08: fix overflow — sebelumnya Row badge
+                  // `mainAxisSize.min` + teksnya nggak dibungkus Flexible,
+                  // jadi "QUALITY EDUCATION COMMUNITY PARTNER" overflow ke
+                  // kanan di HP fisik user (lebar layar lebih sempit dari
+                  // yang keukur pas dev, kelihatan dari screenshot RenderFlex
+                  // overflow stripe kuning-hitam). Fix: Column footer
+                  // di-stretch penuh biar Container badge punya lebar
+                  // pasti (nggak cuma sebesar konten), teksnya dibungkus
+                  // Flexible + softWrap biar jatuh ke baris ke-2 kalau
+                  // beneran nggak muat, bukan overflow horizontal.
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                       ),
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(Icons.verified_outlined, size: 14, color: AppColors.amber500),
                           const SizedBox(width: 6),
-                          Text(
-                            'QUALITY EDUCATION COMMUNITY PARTNER',
-                            style: AppTypography.eyebrowMuted.copyWith(
-                              color: AppColors.amber500,
-                              fontSize: 11,
-                              fontFamily: 'Lora',
-                              fontWeight: FontWeight.w600,
+                          Flexible(
+                            child: Text(
+                              'QUALITY EDUCATION COMMUNITY PARTNER',
+                              textAlign: TextAlign.center,
+                              softWrap: true,
+                              style: AppTypography.eyebrowMuted.copyWith(
+                                color: AppColors.amber500,
+                                fontSize: 11,
+                                fontFamily: 'Lora',
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.8,
+                              ),
                             ),
                           ),
                         ],

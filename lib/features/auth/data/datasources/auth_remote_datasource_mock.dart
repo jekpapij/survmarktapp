@@ -1,4 +1,5 @@
 import '../../../../core/errors/exceptions.dart';
+import '../../domain/entities/user_entity.dart';
 import '../models/user_model.dart';
 import 'auth_remote_datasource.dart';
 
