@@ -6,6 +6,7 @@ import 'core/constants/app_colors.dart';
 import 'features/auth/domain/entities/user_entity.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
+import 'features/researcher/presentation/screens/researcher_dashboard_screen.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
 
 /// Route constants — SCREAMING_SNAKE_CASE per PROMPT_SPEC.md §2.3 (di sini
@@ -38,12 +39,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: AppRoutes.splash, builder: (context, state) => const SplashScreen()),
       GoRoute(path: AppRoutes.login, builder: (context, state) => const LoginScreen()),
       GoRoute(path: AppRoutes.register, builder: (context, state) => const RegisterScreen()),
+      // Update 2026-09-08: bukan placeholder lagi — udah ditranslate dari
+      // frame Figma `researcher-dashboard`, lihat CLAUDE.md.
       GoRoute(
         path: AppRoutes.researcherHome,
-        builder: (context, state) => const _PlaceholderHomeScreen(
-          title: 'Dashboard Peneliti',
-          subtitle: 'Layar ini nyusul pas fitur Researcher diimplementasi (CPMK 3 lanjutan).',
-        ),
+        builder: (context, state) => const ResearcherDashboardScreen(),
       ),
       GoRoute(
         path: AppRoutes.respondentHome,

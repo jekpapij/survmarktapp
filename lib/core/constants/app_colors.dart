@@ -12,6 +12,18 @@ class AppColors {
   static const Color primary600 = Color(0xFF4338CA);
   static const Color primary100 = Color(0xFFE0E7FF);
   static const Color primary50  = Color(0xFFEEF2FF);
+  // Update 2026-09-08: shade indigo KEDUA, beda dari primary600. Ketemu pas
+  // get_design_context frame `researcher-dashboard` — progress bar fill &
+  // aksen bottom-nav aktif konsisten pakai #4F46E5 (indigo-600 Tailwind
+  // standar, warna primary600 YANG LAMA sebelum diganti user ke #4338CA
+  // khusus tombol/link). Kemungkinan besar ini karena frame dashboard
+  // di-generate lewat Figma AI prompting (2026-09-02) SEBELUM keputusan
+  // recolor tombol/link (2026-09-07) — bukan typo, tapi juga belum tentu
+  // "disengaja" kayak yang di login/register. Diputuskan: dipisah jadi
+  // token sendiri (bukan dipaksa jadi primary600) karena konsisten dipakai
+  // di 3 tempat berbeda dalam 1 frame — aman buat dikoreksi ke primary600
+  // nanti kalau user bilang itu emang harusnya sama.
+  static const Color indigoAccent = Color(0xFF4F46E5);
 
   // Accent — Amber
   static const Color amber500 = Color(0xFFF59E0B);
