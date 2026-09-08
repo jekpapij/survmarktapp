@@ -9,4 +9,8 @@ abstract class ResearcherRemoteDataSource {
   Future<DashboardStatsEntity> getDashboardStats();
 
   Future<List<SurveyEntity>> getSurveys();
+
+  Future<void> updateSurveyStatus(String surveyId, SurveyStatus status);
+
+  Future<void> deleteSurvey(String surveyId);
 }

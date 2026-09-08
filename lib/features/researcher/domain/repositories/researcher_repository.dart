@@ -8,4 +8,14 @@ abstract class ResearcherRepository {
   Future<DashboardStatsEntity> getDashboardStats();
 
   Future<List<SurveyEntity>> getSurveys();
+
+  /// Update 2026-09-08: buat modal "Kelola Survey" (pause/lanjutkan). Selalu
+  /// cari survey lewat [surveyId], BUKAN index — lihat CLAUDE.md "Keputusan
+  /// produk penting" soal bug klasik operasi survey pakai index array.
+  Future<void> updateSurveyStatus(String surveyId, SurveyStatus status);
+
+  /// Soft delete — status jadi [SurveyStatus.deleted], tetap kesimpen buat
+  /// audit (bukan dihapus fisik dari list), dan otomatis ke-filter keluar
+  /// dari `getSurveys()`.
+  Future<void> deleteSurvey(String surveyId);
 }

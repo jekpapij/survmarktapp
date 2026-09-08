@@ -162,6 +162,9 @@ class SurveyProgressCard extends StatelessWidget {
     final metaIcon = switch (survey.metaKind) {
       SurveyMetaKind.deadline => Icons.calendar_today_outlined,
       SurveyMetaKind.paused => Icons.pause_circle_outline,
+      // Update 2026-09-08: case baru buat survey yang baru dilanjutkan lagi
+      // dari modal "Kelola Survey" (lihat SurveyMetaKind.resumed di entity).
+      SurveyMetaKind.resumed => Icons.play_circle_outline,
       SurveyMetaKind.completed => Icons.check_circle_outline,
     };
     final metaColor = survey.metaKind == SurveyMetaKind.completed ? AppColors.success : AppColors.slate600;

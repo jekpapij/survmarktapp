@@ -13,6 +13,7 @@ import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/dashboard_stats_entity.dart';
 import '../../domain/entities/survey_entity.dart';
 import '../providers/researcher_providers.dart';
+import '../widgets/kelola_survey_modal.dart';
 import '../widgets/survey_progress_card.dart';
 
 /// Dashboard Researcher — frame Figma `researcher-dashboard` (get_design_
@@ -218,10 +219,12 @@ class _DashboardBody extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           for (final survey in surveys) ...[
             SurveyProgressCard(
+              // Update 2026-09-08: dibuka sebagai modal overlay beneran
+              // (`showModalBottomSheet`), BUKAN route/page baru — sesuai
+              // konfirmasi eksplisit user (lihat CLAUDE.md soal
+              // detail-modal-kelola-survei).
               survey: survey,
-              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Detail Kelola Survei belum tersedia.')),
-              ),
+              onTap: () => showKelolaSurveyModal(context, survey),
             ),
             const SizedBox(height: AppSpacing.sm),
           ],

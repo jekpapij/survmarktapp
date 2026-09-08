@@ -15,7 +15,11 @@ import '../../domain/repositories/researcher_repository.dart';
 /// `if (ApiConstants.useMockBackend) return Mock(); return Impl(...);`
 /// persis pola auth.
 final researcherRemoteDataSourceProvider = Provider<ResearcherRemoteDataSource>((ref) {
-  return const ResearcherRemoteDataSourceMock();
+  // Update 2026-09-08: nggak lagi `const` — mock sekarang nyimpen state
+  // mutable (in-memory list survey) biar pause/lanjutkan/hapus survey dari
+  // modal "Kelola Survey" beneran keliatan efeknya, bukan cuma respon
+  // hardcoded yang sama tiap fetch.
+  return ResearcherRemoteDataSourceMock();
 });
 
 final researcherRepositoryProvider = Provider<ResearcherRepository>((ref) {

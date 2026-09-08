@@ -18,4 +18,11 @@ class ResearcherRepositoryImpl implements ResearcherRepository {
 
   @override
   Future<List<SurveyEntity>> getSurveys() => _remoteDataSource.getSurveys();
+
+  @override
+  Future<void> updateSurveyStatus(String surveyId, SurveyStatus status) =>
+      _remoteDataSource.updateSurveyStatus(surveyId, status);
+
+  @override
+  Future<void> deleteSurvey(String surveyId) => _remoteDataSource.deleteSurvey(surveyId);
 }

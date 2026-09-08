@@ -33,6 +33,29 @@ class Formatters {
     return buffer.toString();
   }
 
+  /// `DateTime` -> teks relatif ("12 hari lagi", "Hari ini", "Lewat 3 hari")
+  /// — dipakai buat countdown deadline yang LIVE di modal "Kelola Survey"
+  /// (dihitung ulang dari `DateTime.now()` tiap kali di-build), beda dari
+  /// `SurveyEntity.metaText` yang statis/snapshot dari mock data.
+  static String relativeDays(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(date.year, date.month, date.day);
+    final diff = target.difference(today).inDays;
+    if (diff == 0) return 'Hari ini';
+    if (diff > 0) return '$diff hari lagi';
+    return 'Lewat ${-diff} hari';
+  }
+
+  /// `DateTime(2026, 9, 20)` -> `20 Sep 2026`.
+  static String shortDate(DateTime date) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
   static String _trimZero(double value) {
     final rounded = (value * 10).round() / 10;
     return rounded == rounded.roundToDouble()
