@@ -10,6 +10,7 @@ class UserModel extends UserEntity {
     required super.email,
     required super.phone,
     required super.role,
+    super.institution,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -19,6 +20,10 @@ class UserModel extends UserEntity {
       email: json['email'] as String,
       phone: json['phone'] as String? ?? '',
       role: UserRoleX.fromApiValue(json['role'] as String),
+      // `?? ''` — backward-compatible sama cache lama (secure storage) dari
+      // sebelum field `institution` ada, biar user yang udah login duluan
+      // nggak crash pas app di-update.
+      institution: json['institution'] as String? ?? '',
     );
   }
 
@@ -28,5 +33,6 @@ class UserModel extends UserEntity {
         'email': email,
         'phone': phone,
         'role': role.apiValue,
+        'institution': institution,
       };
 }

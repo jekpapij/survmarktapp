@@ -9,7 +9,6 @@ import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/survmarkt_app_bar.dart';
 import '../../../../core/widgets/survmarkt_bottom_nav.dart';
 import '../../../../router.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../../wallet/domain/entities/transaction_entity.dart';
 import '../../../wallet/presentation/providers/wallet_providers.dart';
@@ -90,11 +89,10 @@ class ResearcherWalletScreen extends ConsumerWidget {
             context.push(AppRoutes.createSurvey);
             return;
           }
-          ref.read(authNotifierProvider.notifier).logout();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profil belum tersedia — logout dulu ya.')),
-          );
-          context.go(AppRoutes.login);
+          // Update 2026-09-08: tab Profil (index 3) sekarang beneran buka
+          // layar `researcher-profile` (bukan logout-langsung-hack lagi —
+          // tombol Logout beneran sekarang ada DI layar itu, sesuai Figma).
+          context.push(AppRoutes.researcherProfile);
         },
       ),
     );

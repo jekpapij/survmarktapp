@@ -37,6 +37,7 @@ class UserEntity extends Equatable {
     required this.email,
     required this.phone,
     required this.role,
+    this.institution = '',
   });
 
   final String id;
@@ -45,6 +46,14 @@ class UserEntity extends Equatable {
   final String phone;
   final UserRole role;
 
+  // Update 2026-09-08: field baru buat card "Informasi Akun" di frame Figma
+  // `researcher-profile` (node 77:2331) — default '' (bukan required) biar
+  // nggak perlu ubah tempat lain yang udah bikin UserEntity/UserModel (login/
+  // register mock). Register-page emang nggak ada field ini (form Figma-nya
+  // cuma nama/HP/email/password), jadi user baru dari register selalu ''
+  // sampai ada fitur "Edit Profil" yang bisa isi/ubah field ini.
+  final String institution;
+
   @override
-  List<Object?> get props => [id, name, email, phone, role];
+  List<Object?> get props => [id, name, email, phone, role, institution];
 }

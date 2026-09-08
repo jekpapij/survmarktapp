@@ -9,6 +9,7 @@ import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/notifications/presentation/screens/notifications_screen.dart';
 import 'features/researcher/presentation/screens/create_survey_screen.dart';
 import 'features/researcher/presentation/screens/researcher_dashboard_screen.dart';
+import 'features/researcher/presentation/screens/researcher_profile_screen.dart';
 import 'features/researcher/presentation/screens/researcher_wallet_screen.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
 
@@ -33,6 +34,7 @@ abstract class AppRoutes {
   static const researcherHome = '/researcher/home';
   static const createSurvey = '/researcher/create-survey';
   static const researcherWallet = '/researcher/wallet';
+  static const researcherProfile = '/researcher/profile';
   static const respondentHome = '/respondent/home';
   static const adminHome = '/admin/home';
 
@@ -67,6 +69,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.researcherWallet,
         builder: (context, state) => const ResearcherWalletScreen(),
+      ),
+      // Update 2026-09-08: bukan placeholder lagi — udah ditranslate dari
+      // frame Figma `researcher-profile`, lihat CLAUDE.md.
+      GoRoute(
+        path: AppRoutes.researcherProfile,
+        builder: (context, state) => const ResearcherProfileScreen(),
       ),
       GoRoute(
         path: AppRoutes.notifications,

@@ -91,6 +91,11 @@ class AuthRemoteDataSourceMock implements AuthRemoteDataSource {
       email: identifier.contains('@') ? identifier : '$identifier@example.com',
       phone: '081234567890',
       role: role,
+      // Update 2026-09-08: dummy institusi buat card "Informasi Akun" di
+      // frame `researcher-profile` — cuma diisi buat Peneliti (nyamain
+      // Figma "Universitas Indonesia"), Responden/Admin dikosongin karena
+      // belum ada frame profil buat role itu yang butuh nampilinnya.
+      institution: role == UserRole.peneliti ? 'Universitas Indonesia' : '',
     );
   }
 }

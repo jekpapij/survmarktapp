@@ -16,8 +16,8 @@ import '../widgets/role_select_field.dart';
 
 /// Register screen — frame `register-page` di Figma. Sengaja cuma
 /// nama/no.HP/email/password/role (data matching kaya umur/gender/status
-/// BELUM ada di sini) — progressive profiling, lihat "Keputusan produk
-/// penting" di CLAUDE.md.
+/// BELUM ada di sini) — progressive profiling
+
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 

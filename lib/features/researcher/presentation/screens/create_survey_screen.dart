@@ -13,7 +13,6 @@ import '../../../../core/widgets/survmarkt_bottom_nav.dart';
 import '../../../../core/widgets/survmarkt_button.dart';
 import '../../../../core/widgets/survmarkt_text_field.dart';
 import '../../../../router.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../providers/researcher_providers.dart';
 
@@ -158,10 +157,6 @@ class _CreateSurveyScreenState extends ConsumerState<CreateSurveyScreen> {
     }
   }
 
-  void _showStub(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,9 +211,10 @@ class _CreateSurveyScreenState extends ConsumerState<CreateSurveyScreen> {
             context.push(AppRoutes.researcherWallet);
             return;
           }
-          ref.read(authNotifierProvider.notifier).logout();
-          _showStub(context, 'Profil belum tersedia — logout dulu ya.');
-          context.go(AppRoutes.login);
+          // Update 2026-09-08: tab Profil (index 3) sekarang beneran buka
+          // layar `researcher-profile` (bukan logout-langsung-hack lagi —
+          // tombol Logout beneran sekarang ada DI layar itu, sesuai Figma).
+          context.push(AppRoutes.researcherProfile);
         },
       ),
     );
@@ -628,12 +624,26 @@ class _DropdownField extends StatelessWidget {
               // `initialValue` (bukan `value`, deprecated sejak Flutter
               // 3.33) — SDK project ini udah cukup baru buat pakai ini.
               initialValue: value,
+              // Update 2026-09-08 (bugfix): `dropdownColor` WAJIB di-pin
+              // putih + tiap item dikasih style eksplisit — kalau nggak,
+              // popup menu-nya ngikut Theme ambient (Material 3 tonal
+              // palette / dark-mode sistem) dan bisa nongol gelap nggak
+              // kebaca, sesuai laporan user. Pola sama kayak fix yang
+              // udah dipakai di `role_select_field.dart`.
+              dropdownColor: Colors.white,
               isExpanded: true,
               icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.slate400, size: 20),
               style: AppTypography.monoSmall.copyWith(fontSize: 14, color: AppColors.slate900),
               decoration: const InputDecoration(border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.symmetric(vertical: 10)),
               items: [
-                for (final option in options) DropdownMenuItem(value: option, child: Text(option)),
+                for (final option in options)
+                  DropdownMenuItem(
+                    value: option,
+                    child: Text(
+                      option,
+                      style: AppTypography.monoSmall.copyWith(fontSize: 14, color: AppColors.slate900),
+                    ),
+                  ),
               ],
               onChanged: (v) {
                 if (v != null) onChanged(v);

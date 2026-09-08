@@ -10,7 +10,6 @@ import '../../../../core/widgets/metric_card.dart';
 import '../../../../core/widgets/survmarkt_app_bar.dart';
 import '../../../../core/widgets/survmarkt_bottom_nav.dart';
 import '../../../../router.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../domain/entities/dashboard_stats_entity.dart';
 import '../../domain/entities/survey_entity.dart';
@@ -106,22 +105,13 @@ class ResearcherDashboardScreen extends ConsumerWidget {
             context.push(AppRoutes.researcherWallet);
             return;
           }
-          // Update 2026-09-08: tab Profil (index 3) sengaja udah bisa
-          // logout beneran walau layarnya sendiri belum dibangun — Profil
-          // emang rencananya jadi tempat tombol logout (lihat CLAUDE.md
-          // "Bottom nav per role"), dan user butuh cara buat balik ke
-          // login pas testing (session ke-cache via "Ingat Saya"/secure
-          // storage, jadi splash bakal auto-login terus tanpa ini).
-          ref.read(authNotifierProvider.notifier).logout();
-          _showStub(context, 'Profil belum tersedia — logout dulu ya.');
-          context.go(AppRoutes.login);
+          // Update 2026-09-08: tab Profil (index 3) sekarang beneran buka
+          // layar `researcher-profile` (bukan logout-langsung-hack lagi —
+          // tombol Logout beneran sekarang ada DI layar itu, sesuai Figma).
+          context.push(AppRoutes.researcherProfile);
         },
       ),
     );
-  }
-
-  void _showStub(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
