@@ -46,20 +46,29 @@ class _SurvMarktTextFieldState extends State<SurvMarktTextField> {
       borderSide: const BorderSide(color: AppColors.slate200),
     );
 
+    // Update 2026-09-08: label/input/hint diganti dari Inter ke JetBrains Mono
+    // — dicek ulang lewat get_design_context di 2 frame (login-page &
+    // register-page), dua-duanya konsisten pakai JetBrains Mono buat semua
+    // label/placeholder form, bukan cuma eyebrow/angka doang kayak aturan
+    // lama di PROMPT_SPEC.md. Ini widget SHARED, jadi perubahan ini otomatis
+    // ngefek ke semua text field di app (bukan cuma register).
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label, style: AppTypography.labelSemibold),
+        Text(
+          widget.label,
+          style: AppTypography.monoSmall.copyWith(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: AppSpacing.xs),
         TextFormField(
           controller: widget.controller,
           obscureText: _obscure,
           keyboardType: widget.keyboardType,
           validator: widget.validator,
-          style: AppTypography.bodyLarge,
+          style: AppTypography.monoSmall.copyWith(fontSize: 14, color: AppColors.slate900),
           decoration: InputDecoration(
             hintText: widget.hintText,
-            hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.slate400),
+            hintStyle: AppTypography.monoSmall.copyWith(fontSize: 14, color: AppColors.slate400),
             prefixIcon: widget.prefixIcon != null
                 ? Icon(widget.prefixIcon, color: AppColors.slate400, size: 20)
                 : null,

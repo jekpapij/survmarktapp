@@ -90,35 +90,60 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.primary50,
-      appBar: AppBar(
-        backgroundColor: AppColors.primary50,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.primary900),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('SURVMARKT', style: AppTypography.eyebrow),
+                // Update 2026-09-08: header diganti nyamain persis frame Figma
+                // `register-page` (get_design_context, node 27:40) — tombol
+                // back custom boxed (bukan AppBar default chevron), heading
+                // Lora Bold slate900 (bukan primary900), subtitle JetBrains
+                // Mono. Logo/eyebrow "SURVMARKT" dihapus — nggak ada di Figma.
+                GestureDetector(
+                  onTap: () => context.pop(),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      border: Border.all(color: AppColors.slate200),
+                    ),
+                    child: const Icon(Icons.arrow_back, size: 16, color: AppColors.slate900),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Buat Akun Baru',
+                  style: AppTypography.displayMedium.copyWith(
+                    color: AppColors.slate900,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.xs),
-                const Text('Buat Akun Baru', style: AppTypography.displayLarge),
+                Text(
+                  'Daftar untuk mulai menggunakan SurvMarkt',
+                  style: AppTypography.monoSmall.copyWith(fontSize: 14, fontWeight: FontWeight.w400),
+                ),
                 const SizedBox(height: AppSpacing.xl),
                 SurvMarktTextField(
                   label: 'Nama Lengkap',
                   controller: _nameController,
                   prefixIcon: Icons.person_outline,
+                  hintText: 'contoh: Budi Setiawan',
                   validator: Validators.name,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 SurvMarktTextField(
-                  label: 'No. HP',
+                  label: 'Nomor HP',
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   prefixIcon: Icons.phone_outlined,
+                  hintText: 'contoh: 08123456789',
                   validator: Validators.phone,
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -127,6 +152,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.email_outlined,
+                  hintText: 'contoh: budi@university.ac.id',
                   validator: Validators.email,
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -135,6 +161,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   controller: _passwordController,
                   obscureText: true,
                   prefixIcon: Icons.lock_outline,
+                  hintText: 'Buat password baru',
                   validator: Validators.password,
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -143,6 +170,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   controller: _confirmPasswordController,
                   obscureText: true,
                   prefixIcon: Icons.lock_outline,
+                  hintText: 'Ulangi password baru',
                   validator: (value) => Validators.confirmPassword(value, _passwordController.text),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -157,14 +185,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     Checkbox(
                       value: _agreedToTerms,
                       activeColor: AppColors.primary600,
+                      side: const BorderSide(color: AppColors.primary600, width: 2),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                       onChanged: (value) => setState(() => _agreedToTerms = value ?? false),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Padding(
-                        padding: EdgeInsets.only(top: 12),
-                        child: Text(
-                          'Saya setuju dengan Syarat & Ketentuan serta Kebijakan Privasi SurvMarkt.',
-                          style: AppTypography.bodyMedium,
+                        padding: const EdgeInsets.only(top: 12),
+                        child: RichText(
+                          text: TextSpan(
+                            style: AppTypography.monoSmall.copyWith(fontSize: 12, fontWeight: FontWeight.w400),
+                            children: [
+                              const TextSpan(text: 'Saya menyetujui '),
+                              const TextSpan(
+                                text: 'Syarat & Ketentuan',
+                                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary600),
+                              ),
+                              const TextSpan(text: ' yang berlaku'),
+                            ],
+                          ),
                         ),
                       ),
                     ),

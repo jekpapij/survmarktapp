@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../data/datasources/auth_local_datasource.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
+import '../../data/datasources/auth_remote_datasource_mock.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
@@ -30,7 +32,14 @@ final dioClientProvider = Provider<DioClient>((ref) {
   return DioClient(ref.watch(secureStorageProvider));
 });
 
+/// Update 2026-09-08: swap Mock<->Dio lewat `ApiConstants.useMockBackend`
+/// (bukan lewat `ref.watch(dioClientProvider)` yang bakal bikin DioClient
+/// ke-init sia-sia pas mock aktif). Lihat komentar lengkap di
+/// `auth_remote_datasource_mock.dart`.
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
+  if (ApiConstants.useMockBackend) {
+    return const AuthRemoteDataSourceMock();
+  }
   return AuthRemoteDataSourceImpl(ref.watch(dioClientProvider).dio);
 });
 

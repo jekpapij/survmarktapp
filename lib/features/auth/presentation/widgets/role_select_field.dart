@@ -18,26 +18,36 @@ class RoleSelectField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Update 2026-09-08: disamain persis frame Figma `register-page`
+    // (get_design_context, node 27:40, section `role`) — border-2 bukan
+    // border-1, radius 8 bukan 12, label & item pakai JetBrains Mono
+    // (bukan Inter), hint "Pilih" persis kayak di Figma.
     final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      borderSide: const BorderSide(color: AppColors.slate200),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      borderSide: const BorderSide(color: AppColors.slate200, width: 2),
     );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Daftar Sebagai', style: AppTypography.labelSemibold),
+        Text(
+          'Daftar Sebagai',
+          style: AppTypography.monoSmall.copyWith(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: AppSpacing.xs),
         DropdownButtonFormField<UserRole>(
           initialValue: value,
           dropdownColor: Colors.white,
-          hint: Text('Pilih peran', style: AppTypography.bodyMedium.copyWith(color: AppColors.slate400)),
+          hint: Text('Pilih', style: AppTypography.monoSmall.copyWith(fontSize: 14, color: AppColors.slate400)),
           icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.slate400),
           items: _options
               .map(
                 (role) => DropdownMenuItem(
                   value: role,
-                  child: Text(role.label, style: AppTypography.bodyLarge),
+                  child: Text(
+                    role.label,
+                    style: AppTypography.monoSmall.copyWith(fontSize: 16, color: AppColors.slate900),
+                  ),
                 ),
               )
               .toList(),
@@ -52,11 +62,11 @@ class RoleSelectField extends StatelessWidget {
             border: border,
             enabledBorder: border,
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: const BorderSide(color: AppColors.primary600, width: 1.5),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: const BorderSide(color: AppColors.primary600, width: 2),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               borderSide: const BorderSide(color: AppColors.danger),
             ),
           ),

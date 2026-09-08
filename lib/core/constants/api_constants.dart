@@ -15,6 +15,15 @@ class ApiConstants {
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
 
+  /// Update 2026-09-08: toggle global buat pakai [AuthRemoteDataSourceMock]
+  /// (dan mock-mock fitur lain nanti, pola yang sama) selama backend beneran
+  /// belum live — lihat CLAUDE.md "Konfirmasi rubrik ... CPMK 3 TIDAK butuh
+  /// backend live". Default `true`. Pas backend beneran udah siap (CPMK 5),
+  /// tinggal jalanin `flutter run --dart-define=USE_MOCK_BACKEND=false` atau
+  /// balikin defaultValue ini ke `false` — nggak perlu ubah kode lain sama
+  /// sekali (manfaat Clean Architecture: cuma provider yang diganti).
+  static const bool useMockBackend = bool.fromEnvironment('USE_MOCK_BACKEND', defaultValue: true);
+
   // Auth — PROMPT_SPEC.md §8
   static const String login = '/auth/login';
   static const String register = '/auth/register';
