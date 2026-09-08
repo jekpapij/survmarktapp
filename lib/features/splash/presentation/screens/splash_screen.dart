@@ -27,11 +27,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _checkSession() async {
-    // Delay dikit biar splash kerasa (bukan cuma flash sekilas), sambil
-    // nunggu pengecekan sesi tersimpan di secure storage kelar.
+    // Delay minimal splash — update 2026-09-08, atas request user: 1200ms
+    // kerasa kecepetan buat sempet liat logo/tagline/badge, dinaikin ke
+    // 3 detik. Ini floor doang, bukan tambahan di atas waktu cek sesi:
+    // `Future.wait` nunggu yang paling lama antara [cek sesi lokal, timer
+    // 3 detik ini] — jadi splash TETAP konsisten 3 detik walau cek sesi
+    // lokal-nya sendiri jauh lebih cepat dari itu (baca secure storage,
+    // biasanya instan).
     await Future.wait<void>([
       ref.read(authNotifierProvider.notifier).checkAuthStatus(),
-      Future.delayed(const Duration(milliseconds: 1200)),
+      Future.delayed(const Duration(seconds: 3)),
     ]);
     if (!mounted) return;
 
