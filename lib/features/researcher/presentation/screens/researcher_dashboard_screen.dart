@@ -10,6 +10,7 @@ import '../../../../core/widgets/metric_card.dart';
 import '../../../../core/widgets/survmarkt_bottom_nav.dart';
 import '../../../../router.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../domain/entities/dashboard_stats_entity.dart';
 import '../../domain/entities/survey_entity.dart';
 import '../providers/researcher_providers.dart';
@@ -34,7 +35,11 @@ class ResearcherDashboardScreen extends ConsumerWidget {
         bottom: false,
         child: Column(
           children: [
-            _AppBar(onBellTap: () => _showStub(context, 'Belum ada notifikasi baru.')),
+            // Update 2026-09-08: bell icon sekarang beneran buka layar
+            // "Notifikasi" (`context.push` biar tombol back natural balik
+            // ke sini), bukan stub SnackBar lagi — lihat CLAUDE.md soal
+            // fitur notifikasi yang di-self-design (nggak ada frame Figma).
+            _AppBar(onBellTap: () => context.push(AppRoutes.notifications)),
             Expanded(
               child: dashboardAsync.when(
                 loading: () => const Center(
@@ -105,13 +110,18 @@ class ResearcherDashboardScreen extends ConsumerWidget {
   }
 }
 
-class _AppBar extends StatelessWidget {
+class _AppBar extends ConsumerWidget {
   const _AppBar({required this.onBellTap});
 
   final VoidCallback onBellTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Update 2026-09-08: badge titik merah dihitung dari
+    // `unreadNotificationCountProvider` (turunan dari `notificationsProvider`
+    // yang sama, bukan fetch terpisah) — lihat CLAUDE.md.
+    final unreadCount = ref.watch(unreadNotificationCountProvider);
+
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -142,14 +152,44 @@ class _AppBar extends StatelessWidget {
           ),
           GestureDetector(
             onTap: onBellTap,
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: const Icon(Icons.notifications_none_rounded, size: 18, color: Colors.white),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Icon(Icons.notifications_none_rounded, size: 18, color: Colors.white),
+                ),
+                if (unreadCount > 0)
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      constraints: const BoxConstraints(minWidth: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.primary900, width: 1.5),
+                      ),
+                      child: Text(
+                        unreadCount > 9 ? '9+' : '$unreadCount',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'JetBrainsMono',
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],

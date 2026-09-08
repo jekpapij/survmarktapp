@@ -6,6 +6,7 @@ import 'core/constants/app_colors.dart';
 import 'features/auth/domain/entities/user_entity.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
+import 'features/notifications/presentation/screens/notifications_screen.dart';
 import 'features/researcher/presentation/screens/researcher_dashboard_screen.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
 
@@ -17,6 +18,12 @@ abstract class AppRoutes {
   static const splash = '/splash';
   static const login = '/login';
   static const register = '/register';
+
+  // Update 2026-09-08: lintas-role (bukan spesifik researcher/respondent/
+  // admin) — bell icon di app-bar tiap role bakal nunjuk ke sini juga
+  // nantinya. Dibuka lewat `context.push` (bukan `go`) biar tombol back
+  // natural balik ke dashboard asal.
+  static const notifications = '/notifications';
 
   // Placeholder — dashboard beneran per role nyusul pas fitur
   // researcher/respondent/admin diimplementasi (di luar scope translate
@@ -44,6 +51,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.researcherHome,
         builder: (context, state) => const ResearcherDashboardScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        builder: (context, state) => const NotificationsScreen(),
       ),
       GoRoute(
         path: AppRoutes.respondentHome,

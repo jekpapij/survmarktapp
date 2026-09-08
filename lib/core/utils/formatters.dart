@@ -47,6 +47,20 @@ class Formatters {
     return 'Lewat ${-diff} hari';
   }
 
+  /// `DateTime` (WAKTU LAMPAU) -> teks relatif ("Baru saja", "12 menit
+  /// lalu", "2 jam lalu", "Kemarin", "3 hari lalu") — kebalikan dari
+  /// [relativeDays] yang buat tanggal MASA DEPAN (deadline). Dipakai buat
+  /// timestamp notifikasi. Lebih dari seminggu jatuh balik ke [shortDate].
+  static String relativeTime(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    if (diff.inMinutes < 1) return 'Baru saja';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
+    if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+    if (diff.inDays == 1) return 'Kemarin';
+    if (diff.inDays < 7) return '${diff.inDays} hari lalu';
+    return shortDate(date);
+  }
+
   /// `DateTime(2026, 9, 20)` -> `20 Sep 2026`.
   static String shortDate(DateTime date) {
     const months = [
