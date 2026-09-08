@@ -30,6 +30,7 @@ class RoleSelectField extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         DropdownButtonFormField<UserRole>(
           initialValue: value,
+          dropdownColor: Colors.white,
           hint: Text('Pilih peran', style: AppTypography.bodyMedium.copyWith(color: AppColors.slate400)),
           icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.slate400),
           items: _options

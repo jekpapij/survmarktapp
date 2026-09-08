@@ -1,5 +1,6 @@
 plugins {
     id("com.android.application")
+    id("org.jetbrains.kotlin.android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -7,7 +8,11 @@ plugins {
 android {
     namespace = "com.survmarkt.survmarkt"
     compileSdk = 36
-    ndkVersion = flutter.ndkVersion
+    // Beberapa plugin (firebase_core, firebase_messaging, flutter_secure_storage,
+    // path_provider_android, sqflite_android) butuh NDK 28.2.13676358 — versi
+    // default dari Flutter lebih lama, jadi di-pin manual ke versi tertinggi
+    // yang diminta (NDK backward-compatible per warning build).
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

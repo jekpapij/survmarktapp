@@ -45,106 +45,102 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Update 2026-09-07: visual diganti nyamain persis frame Figma
+    // `splash-screen` (get_design_context, node 2:3) — exchange-visual
+    // MiniCard versi awal CPMK 1 udah nggak ada di desain final, diganti
+    // logo besar + tagline + badge partner. Logic auto-login di atas
+    // (initState/_checkSession) TIDAK disentuh.
     return Scaffold(
-      backgroundColor: AppColors.primary900,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Exchange visual — dua kartu yang saling bertukar (signature SurvMarkt)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [AppColors.primary900, Color(0xFF0A0A1B)],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const _MiniCard(
-                  eyebrow: 'PENELITI',
-                  label: 'Setor dana',
-                  borderColor: AppColors.primary600,
+                const SizedBox(height: 10),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset('assets/images/survmarkt_logo.png', width: 140),
+                    const SizedBox(height: 24),
+                    Text(
+                      'SurvMarkt',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.displayLarge.copyWith(
+                        color: const Color(0xFFEEF2FF),
+                        fontSize: 32,
+                        letterSpacing: 1.28,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Marketplace Responden Penelitian',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.monoSmall.copyWith(
+                        color: const Color(0xFFA5B4FC),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+                    const CircularProgressIndicator(
+                      color: AppColors.amber500,
+                      strokeWidth: 2,
+                    ),
+                  ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Column(
-                    children: [
-                      const Icon(Icons.arrow_forward, color: AppColors.primary100, size: 16),
-                      const SizedBox(height: 4),
-                      Text('match', style: AppTypography.monoSmall.copyWith(color: AppColors.primary100)),
-                      const SizedBox(height: 4),
-                      const Icon(Icons.arrow_back, color: AppColors.amber500, size: 16),
-                    ],
-                  ),
-                ),
-                const _MiniCard(
-                  eyebrow: 'RESPONDEN',
-                  label: 'Terima insentif',
-                  borderColor: AppColors.amber500,
-                  eyebrowColor: AppColors.amber500,
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.verified_outlined, size: 14, color: AppColors.amber500),
+                          const SizedBox(width: 6),
+                          Text(
+                            'QUALITY EDUCATION COMMUNITY PARTNER',
+                            style: AppTypography.eyebrowMuted.copyWith(
+                              color: AppColors.amber500,
+                              fontSize: 11,
+                              fontFamily: 'Lora',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'SurvMarkt Initiative © 2026',
+                      style: AppTypography.monoSmall.copyWith(
+                        color: const Color(0xFF818CF8).withValues(alpha: 0.6),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 40),
-            Text(
-              'SurvMarkt',
-              style: AppTypography.displayLarge.copyWith(color: Colors.white, fontSize: 36),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'MARKETPLACE RESPONDEN PENELITIAN',
-              style: AppTypography.eyebrow.copyWith(color: AppColors.primary100),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.darkSurface,
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: AppColors.amber500.withValues(alpha: 0.4)),
-              ),
-              child: Text(
-                'SDG QUALITY EDUCATION PARTNER',
-                style: AppTypography.eyebrowMuted.copyWith(color: AppColors.amber100, fontSize: 9),
-              ),
-            ),
-            const SizedBox(height: 48),
-            const CircularProgressIndicator(
-              color: AppColors.amber500,
-              strokeWidth: 2,
-            ),
-          ],
+          ),
         ),
-      ),
-    );
-  }
-}
-
-class _MiniCard extends StatelessWidget {
-  const _MiniCard({
-    required this.eyebrow,
-    required this.label,
-    required this.borderColor,
-    this.eyebrowColor = AppColors.primary100,
-  });
-
-  final String eyebrow;
-  final String label;
-  final Color borderColor;
-  final Color eyebrowColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 130,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.darkSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor.withValues(alpha: 0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(eyebrow, style: AppTypography.eyebrow.copyWith(color: eyebrowColor)),
-          const SizedBox(height: 6),
-          Text(label, style: AppTypography.displaySmall.copyWith(color: Colors.white, fontSize: 15)),
-        ],
       ),
     );
   }

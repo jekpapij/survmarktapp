@@ -22,6 +22,12 @@ class SurvMarktApp extends ConsumerWidget {
           surface: AppColors.primary50,
         ),
         scaffoldBackgroundColor: AppColors.primary50,
+        // Material 3's default popup/menu surface (dipake DropdownButtonFormField
+        // dkk) di-generate dari tonal palette seed, bukan dari `surface` di atas
+        // — hasilnya sering gelap nggak nyambung sama tema terang. Di-pin manual
+        // ke putih biar semua dropdown di app (Status, Pendidikan, dll — bukan
+        // cuma role-select) konsisten terang.
+        canvasColor: Colors.white,
         fontFamily: 'Inter',
       ),
       darkTheme: ThemeData(
@@ -33,6 +39,7 @@ class SurvMarktApp extends ConsumerWidget {
           surface: AppColors.darkBg,
         ),
         scaffoldBackgroundColor: AppColors.darkBg,
+        canvasColor: AppColors.darkSurface,
         fontFamily: 'Inter',
       ),
       themeMode: ThemeMode.system, // Ikut sistem, konsisten dengan web
