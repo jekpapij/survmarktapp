@@ -30,10 +30,41 @@ import 'auth_remote_datasource.dart';
 ///   identifier-nya udah "divalidasi" di langkah 1.
 /// - Edit Profil: salah satu field wajib (Nama/HP/Peran/Institusi)
 ///   dikosongin -> ValidationException.
+///
+/// **Bugfix 2026-09-09 (laporan user — "register+login jadi responden
+/// ketendang ke researcher"):** dulu class ini `const`/stateless, dan
+/// `login()` NEBAK role user cuma dari substring identifier-nya sendiri
+/// (`_dummyUserFor` — "admin"/"resp" di email/HP, default Peneliti). Role
+/// yang BENERAN dipilih user di dropdown "Daftar Sebagai" pas register sama
+/// sekali nggak kesimpen di manapun — jadi user yang daftar sebagai
+/// Responden pakai email biasa (nggak ngandung kata "resp") bakal login
+/// balik sebagai Peneliti (fallback default heuristik lama). Fix: class ini
+/// sekarang STATEFUL — nyimpen `_registeredUsers` (di memori, key by email
+/// & HP ternormalisasi) tiap `register()` sukses, dan `login()` CEK REGISTRY
+/// INI DULU sebelum jatuh ke heuristik lama. Heuristik lama TETAP
+/// dipertahankan sebagai fallback — masih berguna buat quick-login demo
+/// tanpa perlu register dulu (mis. langsung login pakai "admin@test.com").
 class AuthRemoteDataSourceMock implements AuthRemoteDataSource {
-  const AuthRemoteDataSourceMock();
+  AuthRemoteDataSourceMock();
 
   static const _networkDelay = Duration(milliseconds: 700);
+
+  /// Registry akun yang udah pernah `register()` di sesi app ini (reset lagi
+  /// kalau app di-restart total — sesuai keterbatasan mock in-memory, sama
+  /// kayak `ResearcherRemoteDataSourceMock`/`NotificationRemoteDataSourceMock`
+  /// yang juga stateful). Key: email & nomor HP, DUA-DUANYA (huruf
+  /// kecil+trim) — biar user bisa login pakai salah satu, konsisten sama
+  /// `Validators.emailOrPhone` di form login.
+  final Map<String, UserModel> _registeredUsers = {};
+
+  String _normalize(String value) => value.trim().toLowerCase();
+
+  void _rememberRegisteredUser(UserModel user) {
+    _registeredUsers[_normalize(user.email)] = user;
+    if (user.phone.isNotEmpty) {
+      _registeredUsers[_normalize(user.phone)] = user;
+    }
+  }
 
   @override
   Future<AuthSession> login({required String identifier, required String password}) async {
@@ -43,8 +74,13 @@ class AuthRemoteDataSourceMock implements AuthRemoteDataSource {
       throw const AuthException('Email/No. HP atau password salah.');
     }
 
+    // Cek dulu apakah identifier ini beneran pernah register (role-nya
+    // ambil dari situ, BUKAN ditebak dari teks identifier) — baru fallback
+    // ke heuristik lama kalau belum pernah register (demo/quick-login).
+    final registered = _registeredUsers[_normalize(identifier)];
+
     return AuthSession(
-      user: _dummyUserFor(identifier),
+      user: registered ?? _dummyUserFor(identifier),
       accessToken: 'mock-access-token',
       refreshToken: 'mock-refresh-token',
     );
@@ -64,13 +100,21 @@ class AuthRemoteDataSourceMock implements AuthRemoteDataSource {
       throw const ValidationException('Email sudah terdaftar. Coba email lain.');
     }
 
-    return UserModel(
+    final resolvedRole = UserRoleX.fromApiValue(role);
+    final user = UserModel(
       id: 'mock-${DateTime.now().millisecondsSinceEpoch}',
       name: name,
       email: email,
       phone: phone,
-      role: UserRoleX.fromApiValue(role),
+      role: resolvedRole,
+      // Sama kayak dummy quick-login: institusi cuma keisi default buat
+      // Peneliti (nyamain contoh Figma `researcher-profile`), Responden
+      // dikosongin (belum ada frame profil buat role itu yang butuh
+      // nampilinnya) — user bisa lengkapin sendiri lewat Edit Profil.
+      institution: resolvedRole == UserRole.peneliti ? 'Universitas Indonesia' : '',
     );
+    _rememberRegisteredUser(user);
+    return user;
   }
 
   @override
@@ -118,11 +162,13 @@ class AuthRemoteDataSourceMock implements AuthRemoteDataSource {
       throw const ValidationException('Semua field wajib (*) harus diisi.');
     }
 
-    // Mock ini STATELESS (const, nggak nyimpen sesi siapa yang lagi login —
-    // beda dari `ResearcherRemoteDataSourceMock` yang emang nyimpen state).
-    // id/email/role di bawah cuma PLACEHOLDER — `AuthRepositoryImpl` yang
-    // gabungin balik sama data asli dari cache lokal (lihat catatan di
-    // sana), jadi placeholder ini nggak pernah beneran ditampilin ke user.
+    // Method ini SENGAJA identity-agnostic (nggak nyari/nyocokin ke
+    // `_registeredUsers` — beda dari `login()`/`register()` di atas yang
+    // udah dibikin stateful pas bugfix 2026-09-09), karena signature-nya
+    // nggak dikasih tau ini profil SIAPA yang lagi diedit. id/email/role di
+    // bawah cuma PLACEHOLDER — `AuthRepositoryImpl` yang gabungin balik
+    // sama data asli dari cache lokal (lihat catatan di sana), jadi
+    // placeholder ini nggak pernah beneran ditampilin ke user.
     return UserModel(
       id: '',
       name: name,

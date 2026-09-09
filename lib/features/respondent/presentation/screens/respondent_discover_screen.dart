@@ -11,6 +11,7 @@ import '../../../../router.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../domain/entities/survey_listing_entity.dart';
 import '../providers/respondent_providers.dart';
+import '../widgets/survey_detail_modal.dart';
 import '../widgets/survey_listing_card.dart';
 
 /// Discover — frame Figma `respondent-discover` (get_design_context, node
@@ -171,7 +172,8 @@ class _DiscoverBody extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            for (final survey in featured) SurveyListingCard(survey: survey),
+            for (final survey in featured)
+              SurveyListingCard(survey: survey, onTap: () => showSurveyDetailModal(context, survey)),
           ],
           const SizedBox(height: 20),
           Text(
@@ -198,7 +200,7 @@ class _DiscoverBody extends StatelessWidget {
             )
           else
             for (final survey in normal) ...[
-              SurveyListingCard(survey: survey),
+              SurveyListingCard(survey: survey, onTap: () => showSurveyDetailModal(context, survey)),
               const SizedBox(height: 12),
             ],
         ],

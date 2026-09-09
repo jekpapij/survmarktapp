@@ -38,7 +38,13 @@ final dioClientProvider = Provider<DioClient>((ref) {
 /// `auth_remote_datasource_mock.dart`.
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
   if (ApiConstants.useMockBackend) {
-    return const AuthRemoteDataSourceMock();
+    // Update 2026-09-09 (bugfix role responden): `AuthRemoteDataSourceMock`
+    // sekarang stateful (nyimpen registry akun ter-register) — nggak bisa
+    // `const` lagi. `Provider` (bukan `autoDispose`) di sini otomatis bikin
+    // instance-nya SINGLETON sepanjang app jalan, jadi registry-nya konsisten
+    // dipakai bareng antara layar Register & Login. Lihat catatan lengkap di
+    // `auth_remote_datasource_mock.dart`.
+    return AuthRemoteDataSourceMock();
   }
   return AuthRemoteDataSourceImpl(ref.watch(dioClientProvider).dio);
 });

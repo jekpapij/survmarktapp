@@ -1,0 +1,20 @@
+{
+  // Fix 2026-09-09 (laporan user — Problems panel penuh error Gradle/Java):
+  // 2 error itu ("Could not run phased build action... gradle-9.3.1-all.zip
+  // ... init.gradle does not exist" dan "Resource already exists on disk:
+  // /gradle/bin/test/VersionFetcherTest.kt") BUKAN error kompilasi Flutter —
+  // itu dari extension "Language Support for Java" (redhat.java) + "Gradle
+  // for Java" (vscjava.vscode-gradle) yang auto-scan folder `android/`
+  // project ini SEBAGAI project Java/Gradle berdiri sendiri (bukan lewat
+  // Flutter tooling), dan yang kedua bahkan nyasar nyoba nge-build Gradle
+  // plugin internal punya Flutter SDK sendiri (`fvm/versions/stable/
+  // packages/flutter_tools`) — dua-duanya sama sekali nggak dibutuhin buat
+  // develop Flutter app (Flutter/Dart pakai Gradle wrapper-nya sendiri
+  // lewat `flutter run`/`flutter build`, independen dari extension Java
+  // manapun di VS Code). Disable di sini biar Problems panel bersih dari
+  // noise yang nggak relevan — nggak ngefek ke `flutter run`/`flutter
+  // analyze` sama sekali.
+  "java.import.gradle.enabled": false,
+  "java.configuration.updateBuildConfiguration": "disabled",
+  "gradle.autoDetect": "off"
+}

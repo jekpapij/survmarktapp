@@ -189,7 +189,9 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       // `id`/`email`/`role` SELALU dari cache (user yang beneran login),
-      // BUKAN dari datasource — `AuthRemoteDataSourceMock` stateless jadi
+      // BUKAN dari datasource — `updateProfile` di `AuthRemoteDataSourceMock`
+      // sengaja tetap identity-agnostic (nggak tau id/email/role user, biar
+      // konsisten sama kontrak yang bisa dipenuhi Dio impl beneran juga) dan
       // balikin placeholder buat field itu (lihat catatan di sana); buat
       // Dio impl beneran pun email/role emang nggak diedit dari form ini.
       final merged = UserModel(
