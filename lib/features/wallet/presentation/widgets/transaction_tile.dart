@@ -59,7 +59,11 @@ class TransactionTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  Formatters.shortDate(transaction.date),
+                  // Update 2026-09-09: `dateTimeShort` (bukan `shortDate`
+                  // polos) — nampilin jam kalau transaksinya nyimpen jam
+                  // beneran (respondent-wallet), tetep polos-tanggal buat
+                  // data lama yang cuma nyimpen tanggal (researcher-wallet).
+                  Formatters.dateTimeShort(transaction.date),
                   style: AppTypography.bodySmall.copyWith(fontSize: 12, color: AppColors.slate400),
                 ),
               ],

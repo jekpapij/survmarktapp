@@ -14,9 +14,11 @@ class UserModel extends UserEntity {
     super.academicRole,
     super.researchField,
     super.gender,
-    super.age,
+    super.birthDate,
     super.respondentStatus,
     super.domicile,
+    super.education,
+    super.fieldOfWork,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -35,9 +37,20 @@ class UserModel extends UserEntity {
       // Update 2026-09-09: 4 field "Data Responden" (frame `respondent-
       // profil`, node 89:4765) — sama pola `?? ''` backward-compatible.
       gender: json['gender'] as String? ?? '',
-      age: json['age'] as String? ?? '',
+      // Update 2026-09-09: `age` (angka statis) diganti `birthDate` (ISO
+      // `yyyy-MM-dd`) — lihat catatan lengkap di `user_entity.dart`. Masih
+      // baca key JSON lama `'age'` sebagai fallback KALAU `'birthDate'`
+      // nggak ada (cache lokal dari sebelum perubahan ini) supaya user yang
+      // udah pernah login duluan nggak crash — walau nilainya (angka umur
+      // statis, bukan tanggal) nggak valid buat di-parse ulang jadi umur
+      // via `Formatters.ageLabelFromBirthDate`, jadi efeknya field ini balik
+      // ke "Belum diisi" sekali sampai user isi ulang lewat `respondent-
+      // edit-profile` — trade-off yang wajar buat cache lama non-fatal.
+      birthDate: json['birthDate'] as String? ?? '',
       respondentStatus: json['respondentStatus'] as String? ?? '',
       domicile: json['domicile'] as String? ?? '',
+      education: json['education'] as String? ?? '',
+      fieldOfWork: json['fieldOfWork'] as String? ?? '',
     );
   }
 
@@ -51,8 +64,10 @@ class UserModel extends UserEntity {
         'academicRole': academicRole,
         'researchField': researchField,
         'gender': gender,
-        'age': age,
+        'birthDate': birthDate,
         'respondentStatus': respondentStatus,
         'domicile': domicile,
+        'education': education,
+        'fieldOfWork': fieldOfWork,
       };
 }

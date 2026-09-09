@@ -149,17 +149,32 @@ class AuthRemoteDataSourceMock implements AuthRemoteDataSource {
   }
 
   @override
+  // Update 2026-09-09: validasi "field wajib" DIPINDAH ke masing-masing
+  // SCREEN (`researcher_profile_edit_screen.dart`/`respondent_edit_profile_
+  // screen.dart`, per Form validator + manual check kayak `_academicRole`),
+  // BUKAN di sini lagi — soalnya method ini sekarang dipakai 2 role yang
+  // field wajibnya beda total (institution+academicRole buat Peneliti vs
+  // gender+birthDate+respondentStatus+domicile+education buat Responden),
+  // jadi nggak ada 1 aturan wajib yang bener buat KEDUANYA sekaligus di
+  // level datasource. Yang tetep dicek DI SINI cuma yang UNIVERSAL ke semua
+  // role: nama & nomor HP.
   Future<UserModel> updateProfile({
     required String name,
     required String phone,
-    required String institution,
-    required String academicRole,
-    required String researchField,
+    String institution = '',
+    String academicRole = '',
+    String researchField = '',
+    String gender = '',
+    String birthDate = '',
+    String respondentStatus = '',
+    String domicile = '',
+    String education = '',
+    String fieldOfWork = '',
   }) async {
     await Future.delayed(_networkDelay);
 
-    if (name.trim().isEmpty || phone.trim().isEmpty || institution.trim().isEmpty || academicRole.trim().isEmpty) {
-      throw const ValidationException('Semua field wajib (*) harus diisi.');
+    if (name.trim().isEmpty || phone.trim().isEmpty) {
+      throw const ValidationException('Nama dan nomor HP wajib diisi.');
     }
 
     // Method ini SENGAJA identity-agnostic (nggak nyari/nyocokin ke
@@ -178,6 +193,12 @@ class AuthRemoteDataSourceMock implements AuthRemoteDataSource {
       institution: institution,
       academicRole: academicRole,
       researchField: researchField,
+      gender: gender,
+      birthDate: birthDate,
+      respondentStatus: respondentStatus,
+      domicile: domicile,
+      education: education,
+      fieldOfWork: fieldOfWork,
     );
   }
 

@@ -41,12 +41,20 @@ abstract class AuthRemoteDataSource {
 
   // Update 2026-09-08: "Edit Profil" self-designed — lihat catatan di
   // `AuthRepository`.
+  // Update 2026-09-09: param institusi jadi opsional + 6 param baru buat
+  // Responden — lihat catatan lengkap di `AuthRepository`.
   Future<UserModel> updateProfile({
     required String name,
     required String phone,
-    required String institution,
-    required String academicRole,
-    required String researchField,
+    String institution = '',
+    String academicRole = '',
+    String researchField = '',
+    String gender = '',
+    String birthDate = '',
+    String respondentStatus = '',
+    String domicile = '',
+    String education = '',
+    String fieldOfWork = '',
   });
 }
 
@@ -152,9 +160,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<UserModel> updateProfile({
     required String name,
     required String phone,
-    required String institution,
-    required String academicRole,
-    required String researchField,
+    String institution = '',
+    String academicRole = '',
+    String researchField = '',
+    String gender = '',
+    String birthDate = '',
+    String respondentStatus = '',
+    String domicile = '',
+    String education = '',
+    String fieldOfWork = '',
   }) async {
     try {
       final response = await _dio.patch<Map<String, dynamic>>(
@@ -165,6 +179,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           'institution': institution,
           'academicRole': academicRole,
           'researchField': researchField,
+          'gender': gender,
+          'birthDate': birthDate,
+          'respondentStatus': respondentStatus,
+          'domicile': domicile,
+          'education': education,
+          'fieldOfWork': fieldOfWork,
         },
       );
       final data = response.data!;

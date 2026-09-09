@@ -1,3 +1,4 @@
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../../domain/repositories/notification_repository.dart';
 import '../datasources/notification_remote_datasource.dart';
@@ -9,11 +10,12 @@ class NotificationRepositoryImpl implements NotificationRepository {
   final NotificationRemoteDataSource _remoteDataSource;
 
   @override
-  Future<List<NotificationEntity>> getNotifications() => _remoteDataSource.getNotifications();
+  Future<List<NotificationEntity>> getNotifications({UserRole? forRole}) =>
+      _remoteDataSource.getNotifications(forRole: forRole);
 
   @override
   Future<void> markAsRead(String notificationId) => _remoteDataSource.markAsRead(notificationId);
 
   @override
-  Future<void> markAllAsRead() => _remoteDataSource.markAllAsRead();
+  Future<void> markAllAsRead({UserRole? forRole}) => _remoteDataSource.markAllAsRead(forRole: forRole);
 }

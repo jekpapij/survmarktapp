@@ -73,7 +73,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Akun berhasil dibuat. Silakan masuk.')),
     );
-    context.go(AppRoutes.login);
+    // Update 2026-09-09 (laporan user, lihat catatan lengkap di
+    // `LoginScreen.prefillIdentifier`): kirim email yang BARU AJA
+    // didaftarin lewat `extra`, biar field identifier di Login OTOMATIS
+    // keisi akun ini — bukan ke-prefill identifier login SUKSES TERAKHIR
+    // (bisa jadi akun lama dari testing sebelumnya) yang gampang ke-skip
+    // nggak sengaja pas buru-buru tap "Masuk".
+    context.go(AppRoutes.login, extra: _emailController.text.trim());
   }
 
   @override

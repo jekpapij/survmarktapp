@@ -1,3 +1,4 @@
+import '../../../../core/errors/exceptions.dart';
 import '../../domain/entities/respondent_activity_entity.dart';
 import '../../domain/entities/survey_listing_entity.dart';
 import 'respondent_remote_datasource.dart';
@@ -99,9 +100,21 @@ class RespondentRemoteDataSourceMock implements RespondentRemoteDataSource {
   /// (get_design_context, node 77:2902) — 3x "Menunggu Verifikasi", 1x
   /// "Diverifikasi", 1x "Ditolak". Bukan `static const` (beda dari
   /// `_surveys`) karena list ini BERTAMBAH lewat `submitSurveyResponse`.
+  ///
+  /// `surveyId` 5 baris ini SENGAJA dikasih id placeholder `seed-activity-N`
+  /// (BUKAN `discover-N`) — frame Figma `respondent-activity` independen
+  /// dari `respondent-discover` (2 seed data terpisah, dibikin beda sesi),
+  /// judul yang keliatan mirip ("Persepsi Energi Terbarukan di Kalangan
+  /// Milenial" vs "Persepsi Masyarakat terhadap Energi Terbarukan") aslinya
+  /// BEDA teks persis — dipaksa nyamain id-nya ke survei Discover cuma bakal
+  /// bikin bug baru (nge-block survei Discover yang nggak pernah beneran
+  /// diisi user). Efeknya: cek duplikat di `submitSurveyResponse` di bawah
+  /// otomatis nggak nyangkut ke 5 seed ini — sesuai maksudnya (mereka
+  /// riwayat lama, bukan hasil submit user yang lagi jalan sekarang).
   final List<RespondentActivityEntity> _activities = [
     RespondentActivityEntity(
       id: 'activity-1',
+      surveyId: 'seed-activity-1',
       surveyTitle: 'Studi Adopsi Teknologi AI di UMKM',
       status: ActivityStatus.menungguVerifikasi,
       submittedAt: DateTime(2026, 8, 28),
@@ -109,6 +122,7 @@ class RespondentRemoteDataSourceMock implements RespondentRemoteDataSource {
     ),
     RespondentActivityEntity(
       id: 'activity-2',
+      surveyId: 'seed-activity-2',
       surveyTitle: 'Survei Kebiasaan Belanja Online Gen Z',
       status: ActivityStatus.diverifikasi,
       submittedAt: DateTime(2026, 8, 25),
@@ -116,6 +130,7 @@ class RespondentRemoteDataSourceMock implements RespondentRemoteDataSource {
     ),
     RespondentActivityEntity(
       id: 'activity-3',
+      surveyId: 'seed-activity-3',
       surveyTitle: 'Evaluasi Layanan Kesehatan Digital',
       status: ActivityStatus.menungguVerifikasi,
       submittedAt: DateTime(2026, 8, 24),
@@ -123,6 +138,7 @@ class RespondentRemoteDataSourceMock implements RespondentRemoteDataSource {
     ),
     RespondentActivityEntity(
       id: 'activity-4',
+      surveyId: 'seed-activity-4',
       surveyTitle: 'Persepsi Energi Terbarukan di Kalangan Milenial',
       status: ActivityStatus.ditolak,
       submittedAt: DateTime(2026, 8, 20),
@@ -130,6 +146,7 @@ class RespondentRemoteDataSourceMock implements RespondentRemoteDataSource {
     ),
     RespondentActivityEntity(
       id: 'activity-5',
+      surveyId: 'seed-activity-5',
       surveyTitle: 'Pola Mobilitas Urban Jabodetabek',
       status: ActivityStatus.menungguVerifikasi,
       submittedAt: DateTime(2026, 8, 18),
@@ -149,9 +166,22 @@ class RespondentRemoteDataSourceMock implements RespondentRemoteDataSource {
   @override
   Future<void> submitSurveyResponse(SurveyListingEntity survey) async {
     await Future.delayed(_networkDelay);
+    // Update 2026-09-09 (laporan user — tes "Isi Survei" 3x numpuk 3
+    // aktivitas buat survei yang SAMA): cek duplikat pakai `survey.id`
+    // (bukan judul, ikutin "bug klasik" rule proyek — jangan nyocokin dari
+    // teks) SEBELUM nambah entri baru. Ini pengaman LAPISAN KEDUA — lapisan
+    // pertama (lebih ramah UX, nyegah tombolnya bahkan bisa ditekan) ada di
+    // `SurveyDetailModal` (`_alreadySubmitted`, dari `respondentActivitiesProvider`).
+    // Exception ini tetap dibutuhin buat jaga-jaga race condition (2 tap
+    // cepet sebelum provider sempet ke-refresh).
+    final alreadySubmitted = _activities.any((a) => a.surveyId == survey.id);
+    if (alreadySubmitted) {
+      throw const ValidationException('Survei ini udah pernah kamu isi, nggak bisa diisi ulang.');
+    }
     _activities.add(
       RespondentActivityEntity(
         id: 'activity-${DateTime.now().millisecondsSinceEpoch}',
+        surveyId: survey.id,
         surveyTitle: survey.title,
         status: ActivityStatus.menungguVerifikasi,
         submittedAt: DateTime.now(),

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/datasources/wallet_remote_datasource.dart';
 import '../../data/datasources/wallet_remote_datasource_mock.dart';
 import '../../data/repositories/wallet_repository_impl.dart';
@@ -25,11 +26,18 @@ class WalletData {
   final List<TransactionEntity> transactions;
 }
 
+/// Update 2026-09-09: `forRole` diambil LIVE dari `authNotifierProvider`
+/// (user yang lagi login) — bukan parameter yang di-pass manual dari
+/// screen, biar `ResearcherWalletScreen`/`RespondentWalletScreen` dua-duanya
+/// bisa `ref.watch(walletProvider)` polos tanpa masing-masing perlu tau soal
+/// role, providernya sendiri yang otomatis nyaring data yang bener sesuai
+/// siapa yang lagi login (lihat catatan lengkap di `WalletRepository`).
 final walletProvider = FutureProvider<WalletData>((ref) async {
   final repository = ref.watch(walletRepositoryProvider);
+  final role = ref.watch(authNotifierProvider).user?.role;
   final results = await Future.wait([
-    repository.getBalance(),
-    repository.getTransactions(),
+    repository.getBalance(forRole: role),
+    repository.getTransactions(forRole: role),
   ]);
   return WalletData(
     balance: results[0] as int,

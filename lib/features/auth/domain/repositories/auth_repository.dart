@@ -55,11 +55,27 @@ abstract class AuthRepository {
   /// Update data profil user yang LAGI LOGIN. Balikin [UserEntity] yang
   /// udah keupdate (dipakai caller buat sinkronin `AuthNotifier.state`,
   /// bukan cuma cache lokal).
+  // Update 2026-09-09: `institution`/`academicRole`/`researchField` (isian
+  // khusus Peneliti) diganti dari `required` jadi OPSIONAL (default ''), +
+  // 6 param baru (`gender`/`birthDate`/`respondentStatus`/`domicile`/
+  // `education`/`fieldOfWork`, isian khusus Responden, dari `respondent-
+  // edit-profile` node 77:3214) — 1 method `updateProfile` ini sekarang
+  // dipakai BERSAMA sama `researcher-profile-edit` DAN `respondent-edit-
+  // profile`, tiap caller cukup ngisi param yang relevan sama role-nya
+  // doang, sisanya default `''` yang aman (nggak nge-wipe data section lain
+  // karena section lain emang udah pasti `''` buat role yang beda — pola
+  // sama kayak `forRole` di `WalletRepository`).
   Future<Either<Failure, UserEntity>> updateProfile({
     required String name,
     required String phone,
-    required String institution,
-    required String academicRole,
-    required String researchField,
+    String institution = '',
+    String academicRole = '',
+    String researchField = '',
+    String gender = '',
+    String birthDate = '',
+    String respondentStatus = '',
+    String domicile = '',
+    String education = '',
+    String fieldOfWork = '',
   });
 }

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/datasources/notification_remote_datasource.dart';
 import '../../data/datasources/notification_remote_datasource_mock.dart';
 import '../../data/repositories/notification_repository_impl.dart';
@@ -19,8 +20,14 @@ final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
 
 /// `FutureProvider` — `AsyncValue.when` di screen nanganin Loading/Error/
 /// Success (CPMK 3), pola sama kayak `researcherDashboardProvider`.
+///
+/// Update 2026-09-09: baca role live dari `authNotifierProvider` & terusin
+/// sebagai `forRole` — pola PERSIS sama kayak `walletProvider`, biar list
+/// notifikasi otomatis "dipersonalisasi" sesuai role akun yang lagi login
+/// (tanpa screen manapun perlu tau/nentuin sendiri role-nya).
 final notificationsProvider = FutureProvider<List<NotificationEntity>>((ref) async {
-  return ref.watch(notificationRepositoryProvider).getNotifications();
+  final role = ref.watch(authNotifierProvider).user?.role;
+  return ref.watch(notificationRepositoryProvider).getNotifications(forRole: role);
 });
 
 /// Dipakai buat badge titik merah di bell icon app-bar — dihitung dari

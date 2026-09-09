@@ -1,3 +1,4 @@
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../domain/entities/transaction_entity.dart';
 import '../../domain/repositories/wallet_repository.dart';
 import '../datasources/wallet_remote_datasource.dart';
@@ -9,8 +10,9 @@ class WalletRepositoryImpl implements WalletRepository {
   final WalletRemoteDataSource _remoteDataSource;
 
   @override
-  Future<int> getBalance() => _remoteDataSource.getBalance();
+  Future<int> getBalance({UserRole? forRole}) => _remoteDataSource.getBalance(forRole: forRole);
 
   @override
-  Future<List<TransactionEntity>> getTransactions() => _remoteDataSource.getTransactions();
+  Future<List<TransactionEntity>> getTransactions({UserRole? forRole}) =>
+      _remoteDataSource.getTransactions(forRole: forRole);
 }

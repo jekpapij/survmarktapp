@@ -1,3 +1,4 @@
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../domain/entities/transaction_entity.dart';
 
 /// Kontrak data source — nanti pas CPMK 5 (Integration Engine) diimplementasi
@@ -5,7 +6,7 @@ import '../../domain/entities/transaction_entity.dart';
 /// Dana beneran, bukan cuma catetan transaksi). Baru ada
 /// [WalletRemoteDataSourceMock] buat sekarang.
 abstract class WalletRemoteDataSource {
-  Future<int> getBalance();
+  Future<int> getBalance({UserRole? forRole});
 
-  Future<List<TransactionEntity>> getTransactions();
+  Future<List<TransactionEntity>> getTransactions({UserRole? forRole});
 }

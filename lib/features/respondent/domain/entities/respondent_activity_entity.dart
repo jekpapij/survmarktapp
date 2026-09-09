@@ -26,6 +26,7 @@ extension ActivityStatusX on ActivityStatus {
 class RespondentActivityEntity extends Equatable {
   const RespondentActivityEntity({
     required this.id,
+    required this.surveyId,
     required this.surveyTitle,
     required this.status,
     required this.submittedAt,
@@ -33,6 +34,18 @@ class RespondentActivityEntity extends Equatable {
   });
 
   final String id;
+
+  /// Update 2026-09-09: `SurveyListingEntity.id` dari survei asal (Discover)
+  /// — dipakai buat CEK DUPLIKAT di `RespondentRemoteDataSourceMock.
+  /// submitSurveyResponse` (satu survei cuma boleh diisi SEKALI per akun,
+  /// laporan user: "kalo udah pernah isi survei itu gabisa diisi lagi").
+  /// SENGAJA field terpisah dari `id` (id aktivitas ini sendiri) — ikutin
+  /// "bug klasik" rule proyek: jangan pernah nyocokin/nyari entitas dari
+  /// TEKS (judul survei bisa aja kebetulan sama), selalu dari ID unik.
+  /// 5 seed data di mock nggak match id survei Discover manapun (frame
+  /// Figma-nya independen, judulnya kebetulan mirip tapi bukan survei yang
+  /// sama) — dikasih id placeholder sendiri, lihat catatan di situ.
+  final String surveyId;
   final String surveyTitle;
   final ActivityStatus status;
   final DateTime submittedAt;
@@ -44,5 +57,5 @@ class RespondentActivityEntity extends Equatable {
   String get submittedLabel => 'Dikirim ${Formatters.longDate(submittedAt)}';
 
   @override
-  List<Object?> get props => [id, surveyTitle, status, submittedAt, incentiveAmount];
+  List<Object?> get props => [id, surveyId, surveyTitle, status, submittedAt, incentiveAmount];
 }

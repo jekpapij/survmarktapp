@@ -96,6 +96,39 @@ class Formatters {
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
+  /// `DateTime(2026, 8, 24, 14, 20)` -> `24 Agt 2026 • 14:20`. Kalau jam:menit-
+  /// nya `00:00` (data lama yang emang cuma nyimpen TANGGAL doang, kayak
+  /// transaksi wallet Researcher) -> `24 Agt 2026` polos, TANPA "• 00:00"
+  /// yang bakal nyesatin (keliatan kayak transaksi jam 12 malam padahal
+  /// cuma placeholder tanggal). Dipakai buat `TransactionTile` — dibikin
+  /// biar dipakai bareng LINTAS ROLE tanpa pecah tampilan yang udah ada.
+  static String dateTimeShort(DateTime date) {
+    final datePart = shortDate(date);
+    if (date.hour == 0 && date.minute == 0) return datePart;
+    final hh = date.hour.toString().padLeft(2, '0');
+    final mm = date.minute.toString().padLeft(2, '0');
+    return '$datePart • $hh:$mm';
+  }
+
+  /// ISO date string (`'2003-05-12'`, hasil simpan dari date picker di
+  /// `respondent-edit-profile`) -> label umur (`'22 Tahun'`) — DIHITUNG
+  /// LIVE dari tanggal lahir yang disimpen (1 sumber kebenaran), bukan
+  /// angka umur yang disimpen terpisah & bisa basi tiap tahun — konsisten
+  /// sama prinsip proyek yang udah dipakein di banner completion %
+  /// `respondent-profil` & 2 metric card `respondent-wallet`. String kosong
+  /// atau nggak valid -> `''` (dianggap "Belum diisi" sama caller-nya,
+  /// pola sama kayak field String kosong lain).
+  static String ageLabelFromBirthDate(String isoDate) {
+    final date = DateTime.tryParse(isoDate);
+    if (date == null) return '';
+    final now = DateTime.now();
+    var age = now.year - date.year;
+    final birthdayPassedThisYear =
+        now.month > date.month || (now.month == date.month && now.day >= date.day);
+    if (!birthdayPassedThisYear) age--;
+    return '$age Tahun';
+  }
+
   static String _trimZero(double value) {
     final rounded = (value * 10).round() / 10;
     return rounded == rounded.roundToDouble()

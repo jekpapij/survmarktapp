@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/survmarkt_app_bar.dart';
 import '../../../../core/widgets/survmarkt_bottom_nav.dart';
 import '../../../../router.dart';
@@ -47,15 +48,10 @@ class RespondentProfileScreen extends ConsumerWidget {
                   ? const _NoSessionFallback()
                   : _ProfileBody(
                       user: user,
-                      // Update 2026-09-09: `respondent-edit-profile` (node
-                      // 77:3214) BELUM digarap — jadi baik pensil di header
-                      // card maupun "Edit Profil" di menu list masih stub
-                      // dulu, sama pola kayak menu-row lain yang nunggu
-                      // frame-nya digarap.
-                      onEditProfilStub: () => _showStub(
-                        context,
-                        'Edit Profil (isi Data Responden) nyusul pas frame respondent-edit-profile digarap.',
-                      ),
+                      // Update 2026-09-09: bukan stub lagi — `respondent-
+                      // edit-profile` (node 77:3214) udah ditranslate.
+                      // Lihat CLAUDE.md.
+                      onEditProfil: () => context.push(AppRoutes.respondentEditProfile),
                       onMenuStub: (label) => _showStub(
                         context,
                         '$label belum ada frame Figma-nya — di luar cakupan 16 frame MVP.',
@@ -93,12 +89,9 @@ class RespondentProfileScreen extends ConsumerWidget {
             context.push(AppRoutes.respondentActivity);
             return;
           }
-          // Update 2026-09-09: `respondent-wallet` (node 77:3000) belum
-          // ditranslate — stub, pola sama kayak di
-          // `respondent_discover_screen.dart`.
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Layar ini nyusul — belum ditranslate dari Figma.')),
-          );
+          // Update 2026-09-09: bukan stub lagi — `respondent-wallet` (node
+          // 77:3000) udah ditranslate. Lihat CLAUDE.md.
+          context.push(AppRoutes.respondentWallet);
         },
       ),
     );
@@ -142,7 +135,7 @@ class _NoSessionFallback extends StatelessWidget {
 class _ProfileBody extends StatelessWidget {
   const _ProfileBody({
     required this.user,
-    required this.onEditProfilStub,
+    required this.onEditProfil,
     required this.onMenuStub,
     required this.onNotifikasiTap,
     required this.onUbahPasswordTap,
@@ -150,7 +143,7 @@ class _ProfileBody extends StatelessWidget {
   });
 
   final UserEntity user;
-  final VoidCallback onEditProfilStub;
+  final VoidCallback onEditProfil;
   final ValueChanged<String> onMenuStub;
   final VoidCallback onNotifikasiTap;
   final VoidCallback onUbahPasswordTap;
@@ -163,7 +156,7 @@ class _ProfileBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _ProfileHeaderCard(user: user, onEditTap: onEditProfilStub),
+          _ProfileHeaderCard(user: user, onEditTap: onEditProfil),
           const SizedBox(height: AppSpacing.md),
           _CompletionBanner(user: user),
           const SizedBox(height: AppSpacing.md),
@@ -172,7 +165,7 @@ class _ProfileBody extends StatelessWidget {
           _DataRespondenCard(user: user),
           const SizedBox(height: AppSpacing.md),
           _MenuListCard(
-            onEditProfil: onEditProfilStub,
+            onEditProfil: onEditProfil,
             onUbahPassword: onUbahPasswordTap,
             onNotifikasi: onNotifikasiTap,
             onBantuan: () => onMenuStub('Bantuan'),
@@ -289,7 +282,7 @@ class _CompletionBanner extends StatelessWidget {
 
   int get _filledCount => [
         user.gender,
-        user.age,
+        user.birthDate,
         user.respondentStatus,
         user.domicile,
       ].where((v) => v.isNotEmpty).length;
@@ -428,9 +421,14 @@ class _DataRespondenCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Update 2026-09-09: baris "USIA" sekarang DIHITUNG dari `user.
+    // birthDate` (bukan field angka statis lagi) — lihat catatan lengkap di
+    // `Formatters.ageLabelFromBirthDate` & `UserEntity.birthDate`. Blank-
+    // check-nya (buat teks "Belum diisi") tetep konsisten sama baris lain
+    // di bawah karena yang dicek `birthDate.isEmpty`, BUKAN hasil labelnya.
     final rows = [
       ('JENIS KELAMIN', user.gender),
-      ('USIA', user.age),
+      ('USIA', user.birthDate.isEmpty ? '' : Formatters.ageLabelFromBirthDate(user.birthDate)),
       ('STATUS', user.respondentStatus),
       ('DOMISILI', user.domicile),
     ];

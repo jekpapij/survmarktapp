@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../providers/notification_providers.dart';
 import '../widgets/notification_tile.dart';
@@ -39,7 +40,8 @@ class NotificationsScreen extends ConsumerWidget {
                 orElse: () => false,
               ),
               onMarkAllRead: () async {
-                await ref.read(notificationRepositoryProvider).markAllAsRead();
+                final role = ref.read(authNotifierProvider).user?.role;
+                await ref.read(notificationRepositoryProvider).markAllAsRead(forRole: role);
                 ref.invalidate(notificationsProvider);
               },
             ),

@@ -41,9 +41,11 @@ class UserEntity extends Equatable {
     this.academicRole = '',
     this.researchField = '',
     this.gender = '',
-    this.age = '',
+    this.birthDate = '',
     this.respondentStatus = '',
     this.domicile = '',
+    this.education = '',
+    this.fieldOfWork = '',
   });
 
   final String id;
@@ -76,15 +78,32 @@ class UserEntity extends Equatable {
   // Update 2026-09-09: 4 field "Data Responden" buat frame `respondent-
   // profil` (get_design_context node 89:4765) — Jenis Kelamin/Usia/Status/
   // Domisili. Semua di-tipe-in String (BUKAN enum/int) dan default ''
-  // SENGAJA provisional: `respondent-edit-profile` (node 77:3214, belum
-  // digarap) yang bakal nentuin form final field ini beneran diisi gimana
-  // (mis. `age` mungkin harusnya `birthDate` yang dihitung ke umur, bukan
-  // angka langsung) — String kosong dipakai sebagai penanda "Belum diisi"
-  // di UI, pola sama kayak `institution`/`academicRole`/`researchField`.
+  // dipakai sebagai penanda "Belum diisi" di UI, pola sama kayak
+  // `institution`/`academicRole`/`researchField`.
+  //
+  // Update 2026-09-09 (lanjutan) — `respondent-edit-profile` (node
+  // 77:3214) digarap: field `age` di atas TERNYATA memang harusnya
+  // `birthDate` (persis dugaan di catatan lama ini) — Figma nyuruh user
+  // pilih TANGGAL LAHIR (date picker), bukan ngetik angka umur langsung.
+  // Diganti jadi `birthDate` (String ISO `yyyy-MM-dd`, penyimpanan MENTAH)
+  // + umur ("22 Tahun") DIHITUNG LIVE dari situ lewat
+  // `Formatters.ageLabelFromBirthDate` tiap kali ditampilin (bukan disimpen
+  // dobel sebagai angka statis) — konsisten sama prinsip "1 sumber
+  // kebenaran, jangan simpen angka turunan yang bisa nggak sinkron" yang
+  // udah dipakein di banner completion % & 2 metric card wallet respondent.
+  // Ditambah 2 field baru dari card "Profil Responden" di frame yang sama
+  // (`education`/`fieldOfWork`, "Pendidikan Terakhir"/"Bidang Pekerjaan /
+  // Jurusan") — SENGAJA TIDAK ditambahin ke card read-only "Data Responden"
+  // di `respondent-profil` (yang tetep cuma 4 baris), niru persis pola
+  // `academicRole`/`researchField` sisi researcher yang juga kekumpul lewat
+  // form edit tapi nggak semuanya muncul di card ringkasan `researcher-
+  // profile` (yang cuma nampilin Email/Institusi/HP).
   final String gender;
-  final String age;
+  final String birthDate;
   final String respondentStatus;
   final String domicile;
+  final String education;
+  final String fieldOfWork;
 
   UserEntity copyWith({
     String? name,
@@ -93,9 +112,11 @@ class UserEntity extends Equatable {
     String? academicRole,
     String? researchField,
     String? gender,
-    String? age,
+    String? birthDate,
     String? respondentStatus,
     String? domicile,
+    String? education,
+    String? fieldOfWork,
   }) {
     return UserEntity(
       id: id,
@@ -107,9 +128,11 @@ class UserEntity extends Equatable {
       academicRole: academicRole ?? this.academicRole,
       researchField: researchField ?? this.researchField,
       gender: gender ?? this.gender,
-      age: age ?? this.age,
+      birthDate: birthDate ?? this.birthDate,
       respondentStatus: respondentStatus ?? this.respondentStatus,
       domicile: domicile ?? this.domicile,
+      education: education ?? this.education,
+      fieldOfWork: fieldOfWork ?? this.fieldOfWork,
     );
   }
 
@@ -124,8 +147,10 @@ class UserEntity extends Equatable {
         academicRole,
         researchField,
         gender,
-        age,
+        birthDate,
         respondentStatus,
         domicile,
+        education,
+        fieldOfWork,
       ];
 }

@@ -17,7 +17,27 @@ import '../state/auth_state.dart';
 /// identifier login terakhir tersimpan (returning user), field-nya pun
 /// langsung ke-prefill.
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.prefillIdentifier});
+
+  /// Update 2026-09-09 (laporan user — abis register akun PENELITI baru
+  /// "Budi", pas masuk profil nama-nya stay "Peneliti Dummy"): root cause-
+  /// nya BUKAN bug di `AuthRemoteDataSourceMock` (login/register di situ
+  /// role-agnostic, disamain persis buat semua role) — tapi field
+  /// identifier di layar ini kepake ulang PREFILL dari `lastLoginIdentifier
+  /// Provider` (identifier LOGIN SUKSES TERAKHIR, fitur "Selamat Datang
+  /// Kembali"), yang kalau user abis register akun BARU tapi lupa nge-clear
+  /// field itu sebelum tap "Masuk", bakal login ULANG ke akun LAMA yang
+  /// keprefill situ — bukan ke akun baru yang baru aja didaftarin. Ini
+  /// kejadian karena udah ada sesi peneliti dummy lama dari testing
+  /// jauh-jauh hari sebelum sesi ini (makanya sisi Responden nggak kena —
+  /// belum ada sesi respondent lama yang keprefill).
+  ///
+  /// Fix: `register_screen.dart` sekarang nge-`push` ke sini bawa email
+  /// yang BARU AJA didaftarin lewat parameter ini — field identifier
+  /// diprioritasin dari SINI (bukan `lastLoginIdentifierProvider`) kalau
+  /// dikasih, jadi abis register field-nya otomatis keisi akun yang BENERAN
+  /// baru didaftarin, bukan sesi lama yang nggak sengaja ke-reuse.
+  final String? prefillIdentifier;
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -32,6 +52,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.prefillIdentifier != null && widget.prefillIdentifier!.isNotEmpty) {
+      // Datang dari Register — prioritaskan identifier yang BARU AJA
+      // didaftarin, JANGAN timpa/dicampur sama `lastLoginIdentifierProvider`
+      // (lihat catatan lengkap di `prefillIdentifier`).
+      _identifierController.text = widget.prefillIdentifier!;
+      return;
+    }
     Future.microtask(() async {
       final last = await ref.read(lastLoginIdentifierProvider.future);
       if (mounted && last != null) {

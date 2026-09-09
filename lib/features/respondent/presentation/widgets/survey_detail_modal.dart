@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
+import '../../../../core/errors/exceptions.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../../core/widgets/survmarkt_button.dart';
@@ -72,6 +73,15 @@ class _SurveyDetailModalState extends ConsumerState<SurveyDetailModal> {
           content: Text('"${widget.survey.title}" tercatat di Aktivitas — status Menunggu Verifikasi.'),
         ),
       );
+    } on ValidationException catch (e) {
+      // Update 2026-09-09 (laporan user — "Isi Survei" numpuk 3x buat 1
+      // survei yang sama): kalau race-condition-nya lolos dari pengecekan
+      // `_alreadySubmitted` di bawah (mis. 2 tap kepencet sebelum provider
+      // ke-refresh), datasource sendiri nolak lewat `ValidationException` —
+      // pesannya udah ramah, tampilin apa adanya.
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
@@ -83,6 +93,19 @@ class _SurveyDetailModalState extends ConsumerState<SurveyDetailModal> {
   @override
   Widget build(BuildContext context) {
     final survey = widget.survey;
+    // Update 2026-09-09: cek proaktif dari `respondentActivitiesProvider`
+    // (lapisan pertama, lebih ramah UX daripada nunggu error) — kalau
+    // survei ini UDAH ada di daftar aktivitas (match by `surveyId`, BUKAN
+    // judul — "bug klasik" rule), tombol "Isi Survei" diganti jadi
+    // disabled "Sudah Diisi". Selama masih loading/error, DEFAULT anggap
+    // belum pernah diisi (fail-open) — biar modal tetap kepake normal
+    // walau fetch aktivitas lagi lambat/gagal; `submitSurveyResponse` di
+    // datasource tetap jadi pengaman lapisan kedua kalau ternyata udah
+    // pernah diisi.
+    final alreadySubmitted = ref.watch(respondentActivitiesProvider).maybeWhen(
+          data: (activities) => activities.any((a) => a.surveyId == survey.id),
+          orElse: () => false,
+        );
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
       minChildSize: 0.5,
@@ -110,10 +133,13 @@ class _SurveyDetailModalState extends ConsumerState<SurveyDetailModal> {
                         _QuotaCard(survey: survey),
                         const SizedBox(height: AppSpacing.lg),
                         SurvMarktButton(
-                          label: 'Isi Survei →',
-                          icon: Icons.edit_note_rounded,
+                          label: alreadySubmitted ? 'Sudah Diisi' : 'Isi Survei →',
+                          icon: alreadySubmitted ? Icons.check_circle_outline : Icons.edit_note_rounded,
+                          variant: alreadySubmitted
+                              ? SurvMarktButtonVariant.outline
+                              : SurvMarktButtonVariant.primary,
                           isLoading: _isSubmitting,
-                          onPressed: _isSubmitting ? null : _handleIsiSurvei,
+                          onPressed: (alreadySubmitted || _isSubmitting) ? null : _handleIsiSurvei,
                         ),
                         const SizedBox(height: AppSpacing.md),
                       ],

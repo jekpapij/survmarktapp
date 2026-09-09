@@ -146,12 +146,9 @@ class _RespondentActivityScreenState extends ConsumerState<RespondentActivityScr
             context.push(AppRoutes.respondentProfile);
             return;
           }
-          // Update 2026-09-09: Wallet (`respondent-wallet`, node 77:3000)
-          // belum ditranslate — stub sementara, pola sama kayak di layar
-          // respondent lain.
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Layar ini nyusul — belum ditranslate dari Figma.')),
-          );
+          // Update 2026-09-09: bukan stub lagi — `respondent-wallet` (node
+          // 77:3000) udah ditranslate. Lihat CLAUDE.md.
+          context.push(AppRoutes.respondentWallet);
         },
       ),
     );

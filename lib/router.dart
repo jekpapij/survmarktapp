@@ -17,7 +17,9 @@ import 'features/researcher/presentation/screens/researcher_profile_screen.dart'
 import 'features/researcher/presentation/screens/researcher_wallet_screen.dart';
 import 'features/respondent/presentation/screens/respondent_activity_screen.dart';
 import 'features/respondent/presentation/screens/respondent_discover_screen.dart';
+import 'features/respondent/presentation/screens/respondent_edit_profile_screen.dart';
 import 'features/respondent/presentation/screens/respondent_profile_screen.dart';
+import 'features/respondent/presentation/screens/respondent_wallet_screen.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
 
 /// Route constants — SCREAMING_SNAKE_CASE per PROMPT_SPEC.md §2.3 (di sini
@@ -66,6 +68,14 @@ abstract class AppRoutes {
   // Update 2026-09-09: bukan placeholder lagi — frame Figma
   // `respondent-activity` (node 77:2902), lihat CLAUDE.md.
   static const respondentActivity = '/respondent/activity';
+
+  // Update 2026-09-09: bukan placeholder lagi — frame Figma
+  // `respondent-wallet` (node 77:3000), lihat CLAUDE.md.
+  static const respondentWallet = '/respondent/wallet';
+
+  // Update 2026-09-09: bukan placeholder lagi — frame Figma
+  // `respondent-edit-profile` (node 77:3214), lihat CLAUDE.md.
+  static const respondentEditProfile = '/respondent/profile/edit';
   static const adminHome = '/admin/home';
 
   static String homeForRole(UserRole role) => switch (role) {
@@ -80,7 +90,13 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: AppRoutes.splash,
     routes: [
       GoRoute(path: AppRoutes.splash, builder: (context, state) => const SplashScreen()),
-      GoRoute(path: AppRoutes.login, builder: (context, state) => const LoginScreen()),
+      // Update 2026-09-09: `extra` opsional dari `register_screen.dart`
+      // (email yang baru aja didaftarin) — lihat catatan lengkap di
+      // `LoginScreen.prefillIdentifier`.
+      GoRoute(
+        path: AppRoutes.login,
+        builder: (context, state) => LoginScreen(prefillIdentifier: state.extra as String?),
+      ),
       GoRoute(path: AppRoutes.register, builder: (context, state) => const RegisterScreen()),
       // Update 2026-09-08: "Ubah Password"/"Lupa Password" self-designed —
       // lihat CLAUDE.md.
@@ -151,6 +167,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.respondentActivity,
         builder: (context, state) => const RespondentActivityScreen(),
+      ),
+      // Update 2026-09-09: bukan placeholder lagi — udah ditranslate dari
+      // frame Figma `respondent-wallet` (node 77:3000), lihat CLAUDE.md.
+      GoRoute(
+        path: AppRoutes.respondentWallet,
+        builder: (context, state) => const RespondentWalletScreen(),
+      ),
+      // Update 2026-09-09: bukan placeholder lagi — udah ditranslate dari
+      // frame Figma `respondent-edit-profile` (node 77:3214), lihat
+      // CLAUDE.md. SEMUA 5 frame respondent (16 frame MVP) SELESAI.
+      GoRoute(
+        path: AppRoutes.respondentEditProfile,
+        builder: (context, state) => const RespondentEditProfileScreen(),
       ),
       GoRoute(
         path: AppRoutes.adminHome,

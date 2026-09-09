@@ -170,9 +170,15 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, UserEntity>> updateProfile({
     required String name,
     required String phone,
-    required String institution,
-    required String academicRole,
-    required String researchField,
+    String institution = '',
+    String academicRole = '',
+    String researchField = '',
+    String gender = '',
+    String birthDate = '',
+    String respondentStatus = '',
+    String domicile = '',
+    String education = '',
+    String fieldOfWork = '',
   }) async {
     try {
       final cachedUser = await _localDataSource.getCachedUser();
@@ -186,6 +192,12 @@ class AuthRepositoryImpl implements AuthRepository {
         institution: institution,
         academicRole: academicRole,
         researchField: researchField,
+        gender: gender,
+        birthDate: birthDate,
+        respondentStatus: respondentStatus,
+        domicile: domicile,
+        education: education,
+        fieldOfWork: fieldOfWork,
       );
 
       // `id`/`email`/`role` SELALU dari cache (user yang beneran login),
@@ -203,6 +215,12 @@ class AuthRepositoryImpl implements AuthRepository {
         institution: updated.institution,
         academicRole: updated.academicRole,
         researchField: updated.researchField,
+        gender: updated.gender,
+        birthDate: updated.birthDate,
+        respondentStatus: updated.respondentStatus,
+        domicile: updated.domicile,
+        education: updated.education,
+        fieldOfWork: updated.fieldOfWork,
       );
       await _localDataSource.updateCachedUser(merged);
       return Right(merged);
