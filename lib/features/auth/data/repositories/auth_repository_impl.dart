@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/firebase_google_auth_service.dart';
+import '../../domain/entities/google_signin_outcome.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_datasource.dart';
@@ -51,14 +52,57 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  /// "Masuk dengan Google" — reuse PERSIS pola caching `login()` di atas
-  /// (`cacheSession` + `saveLastLoginIdentifier`), jadi abis "login Google"
-  /// auto-login (`checkAuthStatus`) & varian "Selamat Datang Kembali" di
-  /// `LoginScreen` tetap jalan normal, sama kayak abis login email/HP biasa.
+  /// "Masuk dengan Google" — kalau akun UDAH terdaftar, reuse PERSIS pola
+  /// caching `login()` di atas (`cacheSession` + `saveLastLoginIdentifier`),
+  /// jadi abis "login Google" auto-login (`checkAuthStatus`) & varian
+  /// "Selamat Datang Kembali" di `LoginScreen` tetap jalan normal, sama
+  /// kayak abis login email/HP biasa. Kalau akun BARU (`needsRoleSelection`),
+  /// TIDAK ADA yang di-cache di sini — belum ada sesi buat di-cache, nunggu
+  /// [completeGoogleRegistration] abis user milih role.
   @override
-  Future<Either<Failure, UserEntity>> loginWithGoogle() async {
+  Future<Either<Failure, GoogleSignInOutcome>> loginWithGoogle() async {
     try {
-      final session = await _remoteDataSource.loginWithGoogle();
+      final start = await _remoteDataSource.loginWithGoogle();
+      if (start.needsRoleSelection) {
+        return Right(GoogleSignInOutcome.needsRoleSelection(
+          googleId: start.googleId!,
+          email: start.email!,
+          name: start.name!,
+        ));
+      }
+      final session = start.session!;
+      await _localDataSource.cacheSession(
+        user: session.user,
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
+      );
+      await _localDataSource.saveLastLoginIdentifier(session.user.email);
+      return Right(GoogleSignInOutcome.loggedIn(session.user));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on AuthException catch (e) {
+      return Left(AuthFailure(e.message));
+    } catch (_) {
+      return const Left(ServerFailure());
+    }
+  }
+
+  /// Finalisasi akun Google BARU — pola caching SAMA PERSIS kayak
+  /// `loginWithGoogle()`/`login()` di atas.
+  @override
+  Future<Either<Failure, UserEntity>> completeGoogleRegistration({
+    required String googleId,
+    required String email,
+    required String name,
+    required UserRole role,
+  }) async {
+    try {
+      final session = await _remoteDataSource.completeGoogleRegistration(
+        googleId: googleId,
+        email: email,
+        name: name,
+        role: role,
+      );
       await _localDataSource.cacheSession(
         user: session.user,
         accessToken: session.accessToken,
@@ -68,11 +112,32 @@ class AuthRepositoryImpl implements AuthRepository {
       return Right(session.user);
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
-    } on AuthException catch (e) {
-      return Left(AuthFailure(e.message));
+    } on ValidationException catch (e) {
+      return Left(ValidationFailure(e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
     } catch (_) {
       return const Left(ServerFailure());
     }
+  }
+
+  /// Bugfix (laporan user — abis Batal di dialog pilih role, tap "Masuk
+  /// dengan Google" lagi malah LANGSUNG ke dialog pilih role akun yang
+  /// tadi, bukan balik nampilin pilihan akun Google): `signIn()` di
+  /// [FirebaseGoogleAuthService] udah kepake buat mastiin akun (pas
+  /// [loginWithGoogle] balikin `needsRoleSelection`), jadi SDK Google
+  /// Sign-In udah nge-cache akun itu — persis alasan yang sama kayak
+  /// kenapa `logout()` di bawah juga manggil `_googleAuthService.signOut()`
+  /// (lihat komentarnya). Best-effort: try/catch, SELALU `Right(null)`.
+  @override
+  Future<Either<Failure, void>> cancelGoogleSignIn() async {
+    try {
+      await _googleAuthService.signOut();
+    } catch (_) {
+      // Nggak masalah kalau gagal (mis. emang belum ada sesi Google/
+      // Firebase buat di-clear) — efeknya cuma UX, bukan data rusak.
+    }
+    return const Right(null);
   }
 
   @override

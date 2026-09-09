@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../entities/google_signin_outcome.dart';
 import '../entities/user_entity.dart';
 
 /// Kontrak repository auth — implementasi konkretnya di layer data
@@ -12,10 +13,37 @@ abstract class AuthRepository {
     required String password,
   });
 
-  /// "Masuk dengan Google" — SIMULASI dummy, lihat catatan lengkap di
-  /// `AuthRemoteDataSourceMock.loginWithGoogle`. Google Sign-In BENERAN
-  /// tetap scope CPMK 5.
-  Future<Either<Failure, UserEntity>> loginWithGoogle();
+  /// "Masuk dengan Google" — Google Sign-In BENERAN via Firebase, lihat
+  /// catatan lengkap di `FirebaseGoogleAuthService`/
+  /// `AuthRemoteDataSourceMock.loginWithGoogle`.
+  ///
+  /// Balikin [GoogleSignInOutcome], BUKAN langsung [UserEntity] — akun
+  /// yang UDAH terdaftar login LANGSUNG SELESAI
+  /// (`GoogleSignInOutcome.loggedIn`), tapi akun BARU balikin
+  /// `GoogleSignInOutcome.needsRoleSelection` (UI WAJIB nampilin dialog
+  /// pilih role dulu, baru panggil [completeGoogleRegistration]) — lihat
+  /// catatan lengkap di `GoogleSignInOutcome`.
+  Future<Either<Failure, GoogleSignInOutcome>> loginWithGoogle();
+
+  /// Finalisasi akun Google BARU (dipanggil abis [loginWithGoogle]
+  /// balikin `needsRoleSelection == true` DAN user milih role di dialog).
+  Future<Either<Failure, UserEntity>> completeGoogleRegistration({
+    required String googleId,
+    required String email,
+    required String name,
+    required UserRole role,
+  });
+
+  /// Dipanggil kalau user BATAL di dialog pilih role (nutup tanpa milih)
+  /// abis [loginWithGoogle] balikin `needsRoleSelection == true` — clear
+  /// sesi Google/Firebase yang KEBURU kebentuk pas [loginWithGoogle]
+  /// (proses pilih-akun-nya udah kepake), BUKAN cuma UI-nya doang, biar
+  /// tap "Masuk dengan Google" berikutnya NAMPILIN LAGI dialog pilih akun
+  /// Google (bukan auto-pilih akun yang tadi diam-diam, karena SDK Google
+  /// Sign-In nge-cache akun terakhir sampai eksplisit `signOut()`). Selalu
+  /// balikin sukses (best-effort, no-op kalau nggak ada sesi yang perlu
+  /// di-clear).
+  Future<Either<Failure, void>> cancelGoogleSignIn();
 
   Future<Either<Failure, UserEntity>> register({
     required String name,

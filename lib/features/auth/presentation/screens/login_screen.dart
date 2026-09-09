@@ -9,6 +9,7 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/survmarkt_button.dart';
 import '../../../../core/widgets/survmarkt_text_field.dart';
 import '../../../../router.dart';
+import '../../domain/entities/user_entity.dart';
 import '../providers/auth_providers.dart';
 import '../state/auth_state.dart';
 
@@ -86,18 +87,62 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (user != null) context.go(AppRoutes.homeForRole(user.role));
   }
 
-  /// "Masuk dengan Google" — SIMULASI dummy (bukan snackbar "belum
-  /// tersedia" lagi), lewat pipeline `AuthNotifier`/`AuthRepositoryImpl`
-  /// yang sama persis kayak `_submit()` di atas, jadi hasilnya juga
-  /// ke-cache ke Secure Storage kayak login biasa. Google Sign-In BENERAN
-  /// (Firebase OAuth) tetap scope CPMK 5 — lihat catatan lengkap di
-  /// `AuthRemoteDataSourceMock.loginWithGoogle`.
+  /// "Masuk dengan Google" — Google Sign-In BENERAN via Firebase, lewat
+  /// pipeline `AuthNotifier`/`AuthRepositoryImpl` yang sama persis kayak
+  /// `_submit()` di atas, jadi hasilnya juga ke-cache ke Secure Storage
+  /// kayak login biasa. Lihat catatan lengkap di `FirebaseGoogleAuthService`.
+  ///
+  /// Update (pertanyaan user — "kok akun Google baru selalu Responden?"):
+  /// akun yang UDAH terdaftar langsung "selesai" (state auto ke
+  /// `authenticated`, `outcome` balik `null`). Akun BARU (`outcome` non-
+  /// null) BELUM final — WAJIB nampilin `_GooglePickRoleDialog` dulu,
+  /// tunggu user milih role, baru panggil
+  /// `AuthNotifier.completeGoogleRegistration(...)`. Kalau user BATAL di
+  /// dialog itu (nutup tanpa milih), nggak ada akun "nyangkut" setengah
+  /// jadi di `_registeredUsers` (`AuthRemoteDataSourceMock`) — TAPI (bugfix
+  /// laporan user) sesi Google/Firebase-nya SENDIRI tetap perlu di-
+  /// `cancelGoogleSignIn()`, kalau nggak SDK Google Sign-In nge-cache akun
+  /// yang tadi dipilih, bikin tap "Masuk dengan Google" berikutnya LANGSUNG
+  /// ke dialog pilih role akun itu lagi tanpa nampilin pilihan akun Google.
   Future<void> _submitGoogle() async {
     setState(() => _isGoogleSubmitting = true);
-    final success = await ref.read(authNotifierProvider.notifier).loginWithGoogle();
+    final outcome = await ref.read(authNotifierProvider.notifier).loginWithGoogle();
     if (!mounted) return;
     setState(() => _isGoogleSubmitting = false);
-    if (!success) return;
+
+    if (outcome != null) {
+      final role = await showDialog<UserRole>(
+        context: context,
+        builder: (context) => _GooglePickRoleDialog(name: outcome.name!),
+      );
+      if (!mounted) return;
+
+      if (role == null) {
+        // Bugfix (laporan user — abis Batal di sini, tap "Masuk dengan
+        // Google" lagi malah LANGSUNG ke dialog pilih role akun yang tadi,
+        // bukan balik nampilin pilihan akun Google): `signIn()` di atas
+        // udah kepake buat mastiin akun, jadi SDK Google Sign-In nge-cache
+        // akun itu — WAJIB di-`signOut()` lewat `cancelGoogleSignIn()`
+        // biar tap berikutnya nampilin lagi dialog pilih akun. Nggak ada
+        // akun "nyangkut" di `_registeredUsers` sama sekali di sini (itu
+        // baru kebentuk di `completeGoogleRegistration`), jadi cukup clear
+        // sesi Google/Firebase-nya doang, nggak perlu bersih-bersih lain.
+        await ref.read(authNotifierProvider.notifier).cancelGoogleSignIn();
+        return;
+      }
+
+      setState(() => _isGoogleSubmitting = true);
+      final success = await ref.read(authNotifierProvider.notifier).completeGoogleRegistration(
+            googleId: outcome.googleId!,
+            email: outcome.email!,
+            name: outcome.name!,
+            role: role,
+          );
+      if (!mounted) return;
+      setState(() => _isGoogleSubmitting = false);
+      if (!success) return;
+    }
+
     final user = ref.read(authNotifierProvider).user;
     if (user != null) context.go(AppRoutes.homeForRole(user.role));
   }
@@ -262,6 +307,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Dialog pilih role buat akun Google BARU (belum pernah kedaftar) —
+/// self-designed (nggak ada frame Figma buat ini, sama pola kayak "Ubah
+/// Password"/"Lupa Password"/"Tarik Dana"). Cuma 2 pilihan yang dikasih
+/// (Peneliti/Responden) — Admin SENGAJA nggak ada di sini, alur Admin
+/// tetap PERSIS lewat `AdminLoginScreen` (kredensial dummy fixed, bukan
+/// Google Sign-In). Bisa di-dismiss (tap di luar / tombol Batal) tanpa
+/// efek samping apapun — lihat catatan lengkap di `_submitGoogle`.
+class _GooglePickRoleDialog extends StatelessWidget {
+  const _GooglePickRoleDialog({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Daftar Sebagai?'),
+      content: Text(
+        'Halo $name! Akun Google ini belum pernah dipakai di SurvMarkt — mau daftar sebagai apa?',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Batal'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(UserRole.peneliti),
+          child: const Text('Peneliti'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(UserRole.responden),
+          child: const Text('Responden'),
+        ),
+      ],
     );
   }
 }

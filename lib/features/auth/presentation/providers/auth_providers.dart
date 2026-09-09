@@ -9,6 +9,8 @@ import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/datasources/auth_remote_datasource_mock.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/usecases/cancel_google_signin_usecase.dart';
+import '../../domain/usecases/complete_google_registration_usecase.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/login_with_google_usecase.dart';
@@ -83,6 +85,14 @@ final loginWithGoogleUseCaseProvider = Provider<LoginWithGoogleUseCase>((ref) {
   return LoginWithGoogleUseCase(ref.watch(authRepositoryProvider));
 });
 
+final completeGoogleRegistrationUseCaseProvider = Provider<CompleteGoogleRegistrationUseCase>((ref) {
+  return CompleteGoogleRegistrationUseCase(ref.watch(authRepositoryProvider));
+});
+
+final cancelGoogleSignInUseCaseProvider = Provider<CancelGoogleSignInUseCase>((ref) {
+  return CancelGoogleSignInUseCase(ref.watch(authRepositoryProvider));
+});
+
 final registerUseCaseProvider = Provider<RegisterUseCase>((ref) {
   return RegisterUseCase(ref.watch(authRepositoryProvider));
 });
@@ -105,6 +115,8 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref
   return AuthNotifier(
     loginUseCase: ref.watch(loginUseCaseProvider),
     loginWithGoogleUseCase: ref.watch(loginWithGoogleUseCaseProvider),
+    completeGoogleRegistrationUseCase: ref.watch(completeGoogleRegistrationUseCaseProvider),
+    cancelGoogleSignInUseCase: ref.watch(cancelGoogleSignInUseCaseProvider),
     registerUseCase: ref.watch(registerUseCaseProvider),
     logoutUseCase: ref.watch(logoutUseCaseProvider),
     getCurrentUserUseCase: ref.watch(getCurrentUserUseCaseProvider),

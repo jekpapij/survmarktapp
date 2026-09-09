@@ -40,6 +40,13 @@ class ApiConstants {
   // `login`/`register` Dio saat ini.
   static const String googleLogin = '/auth/google';
 
+  // Update (pertanyaan user — "kok akun Google baru selalu Responden?"):
+  // finalisasi akun Google BARU (yang WAJIB milih role dulu di dialog
+  // `LoginScreen`) sekarang endpoint TERPISAH dari `googleLogin` di atas —
+  // lihat `AuthRemoteDataSourceImpl.completeGoogleRegistration`. Path
+  // TEBAKAN juga, sama status-nya kayak `googleLogin`.
+  static const String googleRegister = '/auth/google/complete';
+
   // Update 2026-09-08: 3 endpoint TAMBAHAN di luar PROMPT_SPEC.md §8 —
   // "Ubah Password"/"Lupa Password" self-designed (nggak ada frame Figma
   // referensi, sama kayak fitur Notifikasi), jadi path-nya nebak sendiri
