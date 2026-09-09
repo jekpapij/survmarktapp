@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
@@ -7,6 +8,7 @@ import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../../core/widgets/survmarkt_button.dart';
 import '../../domain/entities/survey_listing_entity.dart';
+import '../providers/respondent_providers.dart';
 
 /// Modal "Detail Survei" — self-designed (nggak ada frame Figma buat ini di
 /// sisi respondent, user konfirmasi 2026-09-09: "gw di figma bagian
@@ -22,9 +24,9 @@ import '../../domain/entities/survey_listing_entity.dart';
 ///
 /// **Beda dari `KelolaSurveyModal`:** itu buat PENELITI ngelola survey
 /// (aksi Jeda/Lanjutkan/Hapus, mutasi status), ini buat RESPONDEN liat
-/// detail sebelum ikutan (aksi TUNGGAL "Isi Survei", bukan mutasi status
-/// apapun — `SurveyListingEntity` murni data buat DIBACA, nggak ada
-/// `updateStatus`/`delete` di `RespondentRepository`).
+/// detail sebelum ikutan (aksi TUNGGAL "Isi Survei" — Update 2026-09-09:
+/// SEKARANG beneran nge-submit aktivitas baru, lihat `_handleIsiSurvei`,
+/// bukan cuma baca doang lagi).
 Future<void> showSurveyDetailModal(BuildContext context, SurveyListingEntity survey) {
   return showModalBottomSheet<void>(
     context: context,
@@ -34,31 +36,53 @@ Future<void> showSurveyDetailModal(BuildContext context, SurveyListingEntity sur
   );
 }
 
-class SurveyDetailModal extends StatelessWidget {
+class SurveyDetailModal extends ConsumerStatefulWidget {
   const SurveyDetailModal({super.key, required this.survey});
 
   final SurveyListingEntity survey;
 
-  /// **Stub yang disadari (bukan silent/nggak ngapa-ngapain):** "Isi
-  /// Survei" seharusnya buka link survei eksternal (Google Form dkk, sama
-  /// kayak `surveyLink` di sisi researcher) lalu nyatet aktivitas baru
-  /// dengan status "Menunggu Verifikasi" — tapi `SurveyListingEntity`
-  /// belum punya field link, dan belum ada tempat buat nyimpen
-  /// aktivitas itu (frame `respondent-activity` yang bakal jadi rumahnya
-  /// belum ditranslate). Daripada nge-block modal ini nunggu 2 fitur lain
-  /// kelar, tombolnya SENGAJA distub dulu (pola sama kayak "Deposit
-  /// Dana"/Google Sign-In) — bakal disambung beneran begitu
-  /// `respondent-activity` digarap.
-  void _handleIsiSurvei(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Isi Survei (buka link eksternal + catat ke Aktivitas) nyusul pas frame respondent-activity digarap.'),
-      ),
-    );
+  @override
+  ConsumerState<SurveyDetailModal> createState() => _SurveyDetailModalState();
+}
+
+class _SurveyDetailModalState extends ConsumerState<SurveyDetailModal> {
+  bool _isSubmitting = false;
+
+  /// Update 2026-09-09: BUKAN stub lagi — manggil
+  /// `RespondentRepository.submitSurveyResponse` (nyatet aktivitas baru
+  /// status "Menunggu Verifikasi", nongol di tab Aktif
+  /// `respondent-activity` node 77:2902 yang udah digarap). Pola
+  /// `_isSubmitting` + panggil repository langsung + `ref.invalidate`
+  /// NYONTEK PERSIS `_KelolaSurveyModalState._togglePause` di
+  /// `kelola_survey_modal.dart`.
+  ///
+  /// **Masih ada 1 bagian yang SENGAJA distub:** ini belum beneran buka
+  /// link survei eksternal (Google Form dkk) — `SurveyListingEntity`
+  /// belum punya field link, di luar scope CPMK 3 — cuma nyatet
+  /// aktivitasnya aja.
+  Future<void> _handleIsiSurvei() async {
+    setState(() => _isSubmitting = true);
+    try {
+      await ref.read(respondentRepositoryProvider).submitSurveyResponse(widget.survey);
+      ref.invalidate(respondentActivitiesProvider);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('"${widget.survey.title}" tercatat di Aktivitas — status Menunggu Verifikasi.'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Gagal mencatat aktivitas: $e')));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final survey = widget.survey;
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
       minChildSize: 0.5,
@@ -88,7 +112,8 @@ class SurveyDetailModal extends StatelessWidget {
                         SurvMarktButton(
                           label: 'Isi Survei →',
                           icon: Icons.edit_note_rounded,
-                          onPressed: () => _handleIsiSurvei(context),
+                          isLoading: _isSubmitting,
+                          onPressed: _isSubmitting ? null : _handleIsiSurvei,
                         ),
                         const SizedBox(height: AppSpacing.md),
                       ],

@@ -1,3 +1,4 @@
+import '../../domain/entities/respondent_activity_entity.dart';
 import '../../domain/entities/survey_listing_entity.dart';
 
 /// Kontrak data source — nanti pas CPMK 5 diimplementasi beneran pakai Dio
@@ -7,4 +8,8 @@ import '../../domain/entities/survey_listing_entity.dart';
 /// baru ada [RespondentRemoteDataSourceMock].
 abstract class RespondentRemoteDataSource {
   Future<List<SurveyListingEntity>> getDiscoverSurveys();
+
+  Future<List<RespondentActivityEntity>> getActivities();
+
+  Future<void> submitSurveyResponse(SurveyListingEntity survey);
 }

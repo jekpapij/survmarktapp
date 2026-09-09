@@ -84,6 +84,18 @@ class Formatters {
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
+  /// `DateTime(2026, 8, 28)` -> `28 Agustus 2026` (nama bulan PENUH) — beda
+  /// dari [shortDate] yang disingkat ("Agu"). Dipakai buat label "Dikirim
+  /// ..." di `respondent-activity` (get_design_context node 77:2902) yang
+  /// di Figma emang pakai nama bulan lengkap, bukan singkatan.
+  static String longDate(DateTime date) {
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
   static String _trimZero(double value) {
     final rounded = (value * 10).round() / 10;
     return rounded == rounded.roundToDouble()

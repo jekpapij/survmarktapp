@@ -15,6 +15,7 @@ import 'features/researcher/presentation/screens/researcher_dashboard_screen.dar
 import 'features/researcher/presentation/screens/researcher_profile_edit_screen.dart';
 import 'features/researcher/presentation/screens/researcher_profile_screen.dart';
 import 'features/researcher/presentation/screens/researcher_wallet_screen.dart';
+import 'features/respondent/presentation/screens/respondent_activity_screen.dart';
 import 'features/respondent/presentation/screens/respondent_discover_screen.dart';
 import 'features/respondent/presentation/screens/respondent_profile_screen.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
@@ -61,6 +62,10 @@ abstract class AppRoutes {
   // urutan standar) atas permintaan user biar bisa dites logout + ganti
   // role — lihat CLAUDE.md.
   static const respondentProfile = '/respondent/profile';
+
+  // Update 2026-09-09: bukan placeholder lagi — frame Figma
+  // `respondent-activity` (node 77:2902), lihat CLAUDE.md.
+  static const respondentActivity = '/respondent/activity';
   static const adminHome = '/admin/home';
 
   static String homeForRole(UserRole role) => switch (role) {
@@ -140,6 +145,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.respondentProfile,
         builder: (context, state) => const RespondentProfileScreen(),
+      ),
+      // Update 2026-09-09: bukan placeholder lagi — udah ditranslate dari
+      // frame Figma `respondent-activity` (node 77:2902), lihat CLAUDE.md.
+      GoRoute(
+        path: AppRoutes.respondentActivity,
+        builder: (context, state) => const RespondentActivityScreen(),
       ),
       GoRoute(
         path: AppRoutes.adminHome,

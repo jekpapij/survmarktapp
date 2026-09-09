@@ -87,8 +87,14 @@ class RespondentProfileScreen extends ConsumerWidget {
             context.canPop() ? context.pop() : context.go(AppRoutes.respondentHome);
             return;
           }
-          // Update 2026-09-09: Aktivitas & Wallet (node 77:2902/77:3000)
-          // belum ditranslate — stub, pola sama kayak di
+          if (index == 1) {
+            // Update 2026-09-09: bukan stub lagi — `respondent-activity`
+            // (node 77:2902) udah ditranslate. Lihat CLAUDE.md.
+            context.push(AppRoutes.respondentActivity);
+            return;
+          }
+          // Update 2026-09-09: `respondent-wallet` (node 77:3000) belum
+          // ditranslate — stub, pola sama kayak di
           // `respondent_discover_screen.dart`.
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Layar ini nyusul — belum ditranslate dari Figma.')),

@@ -1,3 +1,4 @@
+import '../../domain/entities/respondent_activity_entity.dart';
 import '../../domain/entities/survey_listing_entity.dart';
 import 'respondent_remote_datasource.dart';
 
@@ -12,8 +13,17 @@ import 'respondent_remote_datasource.dart';
 /// konteks judul/institusi tiap survei (Figma cuma nunjukin 4 filter chip
 /// contoh, nggak nge-tag kategori eksplisit per card) — lihat catatan di
 /// `SurveyCategory`.
+///
+/// **Update 2026-09-09 — jadi STATEFUL (bukan `const` lagi):** buat nampung
+/// `_activities` yang bisa BERTAMBAH pas user tap "Isi Survei" di
+/// `SurveyDetailModal` (`submitSurveyResponse`). Diterapin dari AWAL kali
+/// ini (bukan nunggu laporan bug) — pelajaran langsung dari bugfix
+/// `AuthRemoteDataSourceMock` sebelumnya (Update 2026-09-09 "register+login
+/// sebagai Responden malah ke-routing ke Researcher"): data yang "dipilih/
+/// dihasilkan user sendiri" (bukan cuma ditebak dari teks) WAJIB kesimpen di
+/// state kelas, jangan cuma numpang lewat.
 class RespondentRemoteDataSourceMock implements RespondentRemoteDataSource {
-  const RespondentRemoteDataSourceMock();
+  RespondentRemoteDataSourceMock();
 
   static const _networkDelay = Duration(milliseconds: 700);
 
@@ -83,5 +93,70 @@ class RespondentRemoteDataSourceMock implements RespondentRemoteDataSource {
   Future<List<SurveyListingEntity>> getDiscoverSurveys() async {
     await Future.delayed(_networkDelay);
     return _surveys;
+  }
+
+  /// Seed PERSIS nyamain 5 contoh kartu di frame Figma `respondent-activity`
+  /// (get_design_context, node 77:2902) — 3x "Menunggu Verifikasi", 1x
+  /// "Diverifikasi", 1x "Ditolak". Bukan `static const` (beda dari
+  /// `_surveys`) karena list ini BERTAMBAH lewat `submitSurveyResponse`.
+  final List<RespondentActivityEntity> _activities = [
+    RespondentActivityEntity(
+      id: 'activity-1',
+      surveyTitle: 'Studi Adopsi Teknologi AI di UMKM',
+      status: ActivityStatus.menungguVerifikasi,
+      submittedAt: DateTime(2026, 8, 28),
+      incentiveAmount: 25000,
+    ),
+    RespondentActivityEntity(
+      id: 'activity-2',
+      surveyTitle: 'Survei Kebiasaan Belanja Online Gen Z',
+      status: ActivityStatus.diverifikasi,
+      submittedAt: DateTime(2026, 8, 25),
+      incentiveAmount: 15000,
+    ),
+    RespondentActivityEntity(
+      id: 'activity-3',
+      surveyTitle: 'Evaluasi Layanan Kesehatan Digital',
+      status: ActivityStatus.menungguVerifikasi,
+      submittedAt: DateTime(2026, 8, 24),
+      incentiveAmount: 20000,
+    ),
+    RespondentActivityEntity(
+      id: 'activity-4',
+      surveyTitle: 'Persepsi Energi Terbarukan di Kalangan Milenial',
+      status: ActivityStatus.ditolak,
+      submittedAt: DateTime(2026, 8, 20),
+      incentiveAmount: 10000,
+    ),
+    RespondentActivityEntity(
+      id: 'activity-5',
+      surveyTitle: 'Pola Mobilitas Urban Jabodetabek',
+      status: ActivityStatus.menungguVerifikasi,
+      submittedAt: DateTime(2026, 8, 18),
+      incentiveAmount: 30000,
+    ),
+  ];
+
+  @override
+  Future<List<RespondentActivityEntity>> getActivities() async {
+    await Future.delayed(_networkDelay);
+    // List baru (bukan referensi mentah `_activities`) — jaga-jaga biar
+    // caller nggak bisa nyelundup mutasi langsung ke state internal mock,
+    // pola sama kayak `ResearcherRemoteDataSourceMock`.
+    return List.unmodifiable(_activities.reversed);
+  }
+
+  @override
+  Future<void> submitSurveyResponse(SurveyListingEntity survey) async {
+    await Future.delayed(_networkDelay);
+    _activities.add(
+      RespondentActivityEntity(
+        id: 'activity-${DateTime.now().millisecondsSinceEpoch}',
+        surveyTitle: survey.title,
+        status: ActivityStatus.menungguVerifikasi,
+        submittedAt: DateTime.now(),
+        incentiveAmount: survey.incentiveAmount,
+      ),
+    );
   }
 }
