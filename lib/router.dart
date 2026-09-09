@@ -16,6 +16,7 @@ import 'features/researcher/presentation/screens/researcher_profile_edit_screen.
 import 'features/researcher/presentation/screens/researcher_profile_screen.dart';
 import 'features/researcher/presentation/screens/researcher_wallet_screen.dart';
 import 'features/respondent/presentation/screens/respondent_discover_screen.dart';
+import 'features/respondent/presentation/screens/respondent_profile_screen.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
 
 /// Route constants — SCREAMING_SNAKE_CASE per PROMPT_SPEC.md §2.3 (di sini
@@ -54,6 +55,12 @@ abstract class AppRoutes {
   // `researcher-profile-edit` (node 77:2654), lihat CLAUDE.md.
   static const researcherProfileEdit = '/researcher/profile/edit';
   static const respondentHome = '/respondent/home';
+
+  // Update 2026-09-09: bukan placeholder lagi — frame Figma
+  // `respondent-profil` (node 89:4765), dibikin LOMPAT duluan (di luar
+  // urutan standar) atas permintaan user biar bisa dites logout + ganti
+  // role — lihat CLAUDE.md.
+  static const respondentProfile = '/respondent/profile';
   static const adminHome = '/admin/home';
 
   static String homeForRole(UserRole role) => switch (role) {
@@ -127,6 +134,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.respondentHome,
         builder: (context, state) => const RespondentDiscoverScreen(),
+      ),
+      // Update 2026-09-09: bukan placeholder lagi — udah ditranslate dari
+      // frame Figma `respondent-profil` (node 89:4765), lihat CLAUDE.md.
+      GoRoute(
+        path: AppRoutes.respondentProfile,
+        builder: (context, state) => const RespondentProfileScreen(),
       ),
       GoRoute(
         path: AppRoutes.adminHome,

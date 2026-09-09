@@ -118,10 +118,17 @@ class _RespondentDiscoverScreenState extends ConsumerState<RespondentDiscoverScr
         ],
         onTap: (index) {
           if (index == 0) return;
-          // Update 2026-09-09: 3 frame respondent lain (`respondent-
-          // activity`, `respondent-wallet`, `respondent-edit-profile`, +
-          // `respondent-profil`) belum ditranslate — stub sementara, pola
-          // sama kayak researcher pas dashboard-nya baru sendirian dulu.
+          if (index == 3) {
+            // Update 2026-09-09: bukan stub lagi — `respondent-profil`
+            // (node 89:4765) udah ditranslate, dibikin lompat duluan biar
+            // user bisa tes logout + ganti role. Lihat CLAUDE.md.
+            context.push(AppRoutes.respondentProfile);
+            return;
+          }
+          // Update 2026-09-09: 2 frame respondent lain (`respondent-
+          // activity`, `respondent-wallet`) belum ditranslate — stub
+          // sementara, pola sama kayak researcher pas dashboard-nya baru
+          // sendirian dulu.
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Layar ini nyusul — belum ditranslate dari Figma.')),
           );

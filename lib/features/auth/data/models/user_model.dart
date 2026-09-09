@@ -13,6 +13,10 @@ class UserModel extends UserEntity {
     super.institution,
     super.academicRole,
     super.researchField,
+    super.gender,
+    super.age,
+    super.respondentStatus,
+    super.domicile,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -28,6 +32,12 @@ class UserModel extends UserEntity {
       institution: json['institution'] as String? ?? '',
       academicRole: json['academicRole'] as String? ?? '',
       researchField: json['researchField'] as String? ?? '',
+      // Update 2026-09-09: 4 field "Data Responden" (frame `respondent-
+      // profil`, node 89:4765) — sama pola `?? ''` backward-compatible.
+      gender: json['gender'] as String? ?? '',
+      age: json['age'] as String? ?? '',
+      respondentStatus: json['respondentStatus'] as String? ?? '',
+      domicile: json['domicile'] as String? ?? '',
     );
   }
 
@@ -40,5 +50,9 @@ class UserModel extends UserEntity {
         'institution': institution,
         'academicRole': academicRole,
         'researchField': researchField,
+        'gender': gender,
+        'age': age,
+        'respondentStatus': respondentStatus,
+        'domicile': domicile,
       };
 }

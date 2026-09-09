@@ -40,6 +40,10 @@ class UserEntity extends Equatable {
     this.institution = '',
     this.academicRole = '',
     this.researchField = '',
+    this.gender = '',
+    this.age = '',
+    this.respondentStatus = '',
+    this.domicile = '',
   });
 
   final String id;
@@ -69,12 +73,29 @@ class UserEntity extends Equatable {
   final String academicRole;
   final String researchField;
 
+  // Update 2026-09-09: 4 field "Data Responden" buat frame `respondent-
+  // profil` (get_design_context node 89:4765) — Jenis Kelamin/Usia/Status/
+  // Domisili. Semua di-tipe-in String (BUKAN enum/int) dan default ''
+  // SENGAJA provisional: `respondent-edit-profile` (node 77:3214, belum
+  // digarap) yang bakal nentuin form final field ini beneran diisi gimana
+  // (mis. `age` mungkin harusnya `birthDate` yang dihitung ke umur, bukan
+  // angka langsung) — String kosong dipakai sebagai penanda "Belum diisi"
+  // di UI, pola sama kayak `institution`/`academicRole`/`researchField`.
+  final String gender;
+  final String age;
+  final String respondentStatus;
+  final String domicile;
+
   UserEntity copyWith({
     String? name,
     String? phone,
     String? institution,
     String? academicRole,
     String? researchField,
+    String? gender,
+    String? age,
+    String? respondentStatus,
+    String? domicile,
   }) {
     return UserEntity(
       id: id,
@@ -85,10 +106,26 @@ class UserEntity extends Equatable {
       institution: institution ?? this.institution,
       academicRole: academicRole ?? this.academicRole,
       researchField: researchField ?? this.researchField,
+      gender: gender ?? this.gender,
+      age: age ?? this.age,
+      respondentStatus: respondentStatus ?? this.respondentStatus,
+      domicile: domicile ?? this.domicile,
     );
   }
 
   @override
-  List<Object?> get props =>
-      [id, name, email, phone, role, institution, academicRole, researchField];
+  List<Object?> get props => [
+        id,
+        name,
+        email,
+        phone,
+        role,
+        institution,
+        academicRole,
+        researchField,
+        gender,
+        age,
+        respondentStatus,
+        domicile,
+      ];
 }
