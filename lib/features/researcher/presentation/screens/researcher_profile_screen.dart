@@ -123,7 +123,7 @@ class _NoSessionFallback extends StatelessWidget {
           children: [
             const Icon(Icons.person_off_outlined, size: 40, color: AppColors.slate400),
             const SizedBox(height: AppSpacing.sm),
-            Text(
+            const Text(
               'Sesi tidak ditemukan. Silakan login ulang.',
               textAlign: TextAlign.center,
               style: AppTypography.bodyMedium,

@@ -10,6 +10,7 @@ import '../../../../core/widgets/metric_card.dart';
 import '../../../../core/widgets/survmarkt_app_bar.dart';
 import '../../../../core/widgets/survmarkt_bottom_nav.dart';
 import '../../../../router.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../notifications/presentation/providers/notification_providers.dart';
 import '../../../wallet/domain/entities/transaction_entity.dart';
 import '../../../wallet/presentation/providers/wallet_providers.dart';
@@ -43,6 +44,12 @@ class RespondentWalletScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final walletAsync = ref.watch(walletProvider);
+    // CPMK 4 — "nyalain" listener auto-sync selama layar Wallet Respondent
+    // ini mounted (lihat catatan lengkap di `walletAutoSyncProvider`).
+    // Cukup di sini doang (bukan juga di `ResearcherWalletScreen`) karena
+    // cuma "Tarik Dana" respondent yang punya alur tulis-offline beneran
+    // di scope CPMK 4 ini — "Deposit Dana" researcher tetap stub CPMK 5.
+    ref.watch(walletAutoSyncProvider);
 
     return Scaffold(
       backgroundColor: AppColors.primary50,
@@ -157,10 +164,60 @@ class _WalletBody extends StatelessWidget {
   }
 }
 
-class _BalanceHeroCard extends StatelessWidget {
+class _BalanceHeroCard extends ConsumerStatefulWidget {
   const _BalanceHeroCard({required this.balance});
 
   final int balance;
+
+  @override
+  ConsumerState<_BalanceHeroCard> createState() => _BalanceHeroCardState();
+}
+
+class _BalanceHeroCardState extends ConsumerState<_BalanceHeroCard> {
+  bool _isSubmitting = false;
+
+  // Update CPMK 4 (Persistent Data & Offline-First): "Tarik Dana" BUKAN
+  // stub snackbar lagi (payout BENERAN ke bank/e-wallet via payment
+  // gateway tetap nyusul CPMK 5 — nominal di sini dummy/fixed, bukan
+  // transfer sungguhan). Yang beneran baru: tombol ini sekarang jalur
+  // TULIS pertama di app yang keduanya (a) tetap "berhasil" walau device
+  // OFFLINE (masuk antrean lokal, Panduan Pengerjaan CPMK 4 poin 2), dan
+  // (b) langsung nyerminin perubahan saldo secara optimis tanpa nunggu
+  // sync — buktiin `WalletRepositoryImpl` offline-first beneran jalan,
+  // bukan cuma di layer baca.
+  Future<void> _handleTarikDana() async {
+    final amount = await showDialog<int>(
+      context: context,
+      builder: (context) => const _TarikDanaDialog(),
+    );
+    if (amount == null || !mounted) return;
+
+    setState(() => _isSubmitting = true);
+    try {
+      final result = await ref
+          .read(walletRepositoryProvider)
+          .requestWithdrawal(forRole: UserRole.responden, amount: amount);
+      ref.invalidate(walletProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.isPendingSync
+                ? 'Device lagi offline — Tarik Dana ${Formatters.rupiahFull(amount)} disimpan lokal, otomatis disinkronkan pas online lagi.'
+                : 'Tarik Dana ${Formatters.rupiahFull(amount)} berhasil diproses.',
+          ),
+          backgroundColor: result.isPendingSync ? AppColors.amber500 : null,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memproses Tarik Dana: $e'), backgroundColor: AppColors.danger),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -183,25 +240,26 @@ class _BalanceHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            Formatters.rupiahFull(balance),
+            Formatters.rupiahFull(widget.balance),
             style: AppTypography.monoNumber.copyWith(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: AppSpacing.md),
-          // Update 2026-09-09: "Tarik Dana" (bukan "Deposit Dana" kayak
-          // researcher) — payout beneran ke rekening bank/e-wallet butuh
-          // payment gateway (Midtrans/Xendit/Stripe sandbox), sama kayak
-          // "Deposit Dana" researcher: di luar scope CPMK 3, distub dulu
-          // dengan feedback jelas (bukan silent), nyusul di CPMK 5.
           GestureDetector(
-            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Tarik Dana (payout ke bank/e-wallet) nyusul di CPMK 5.')),
-            ),
+            onTap: _isSubmitting ? null : _handleTarikDana,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppRadius.full)),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (_isSubmitting) ...[
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.amber500),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   Text(
                     'Tarik Dana',
                     style: AppTypography.monoSmall.copyWith(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.amber500),
@@ -214,6 +272,55 @@ class _BalanceHeroCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Dialog kecil buat masukin nominal Tarik Dana — self-designed (nggak ada
+/// frame Figma buat ini, sama pola kayak "Ubah Password"/"Lupa Password"),
+/// nominal default `50000` biar tinggal tap "Tarik" tanpa ngetik apa-apa
+/// kalau cuma mau coba alur offline-first-nya cepat.
+class _TarikDanaDialog extends StatefulWidget {
+  const _TarikDanaDialog();
+
+  @override
+  State<_TarikDanaDialog> createState() => _TarikDanaDialogState();
+}
+
+class _TarikDanaDialogState extends State<_TarikDanaDialog> {
+  final _controller = TextEditingController(text: '50000');
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Tarik Dana'),
+      content: TextField(
+        controller: _controller,
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(
+          prefixText: 'Rp ',
+          labelText: 'Nominal',
+          helperText: 'Coba matikan WiFi/data dulu buat tes alur offline-nya.',
+          helperMaxLines: 2,
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+        FilledButton(
+          onPressed: () {
+            final amount = int.tryParse(_controller.text.trim());
+            if (amount == null || amount <= 0) return;
+            Navigator.of(context).pop(amount);
+          },
+          child: const Text('Tarik'),
+        ),
+      ],
     );
   }
 }

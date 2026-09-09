@@ -1,4 +1,5 @@
 import '../../../../core/errors/exceptions.dart';
+import '../../../../core/network/firebase_google_auth_service.dart';
 import '../../domain/entities/user_entity.dart';
 import '../models/user_model.dart';
 import 'auth_remote_datasource.dart';
@@ -45,7 +46,10 @@ import 'auth_remote_datasource.dart';
 /// dipertahankan sebagai fallback — masih berguna buat quick-login demo
 /// tanpa perlu register dulu (mis. langsung login pakai "admin@test.com").
 class AuthRemoteDataSourceMock implements AuthRemoteDataSource {
-  AuthRemoteDataSourceMock();
+  AuthRemoteDataSourceMock({required FirebaseGoogleAuthService googleAuthService})
+      : _googleAuthService = googleAuthService;
+
+  final FirebaseGoogleAuthService _googleAuthService;
 
   static const _networkDelay = Duration(milliseconds: 700);
 
@@ -83,6 +87,50 @@ class AuthRemoteDataSourceMock implements AuthRemoteDataSource {
       user: registered ?? _dummyUserFor(identifier),
       accessToken: 'mock-access-token',
       refreshToken: 'mock-refresh-token',
+    );
+  }
+
+  /// "Masuk dengan Google" — Google Sign-In BENERAN via
+  /// `FirebaseGoogleAuthService` (Firebase Auth + Google Sign-In SDK),
+  /// BUKAN dummy hardcoded lagi (versi sebelumnya: profil "Alex Wijaya"
+  /// yang di-fix). Backend REST-nya TETAP mock (`_registeredUsers` in-
+  /// memory, sejalan `ApiConstants.useMockBackend`) — cuma identitas
+  /// Google-nya yang sekarang 100% nyata (email/nama/foto beneran dari
+  /// akun Google yang dipilih user di dialog). Role tetap default
+  /// `responden` buat akun yang belum pernah `register()` manual
+  /// sebelumnya (alasan sama kayak versi dummy dulu — target utama
+  /// SurvMarkt = mahasiswa, lebih plausible pakai akun Google pribadi
+  /// buat isi survei, dibanding Peneliti yang biasanya institusi).
+  /// Session hasilnya TETAP di-`cacheSession` lewat `AuthLocalDataSource`
+  /// yang SAMA persis kayak `login()` biasa (lihat
+  /// `AuthRepositoryImpl.login`) — jadi ini juga sekalian bukti tambahan
+  /// integrasi local storage CPMK 4, bukan cuma UI kosmetik.
+  @override
+  Future<AuthSession> loginWithGoogle() async {
+    final googleResult = await _googleAuthService.signIn();
+    if (googleResult == null) {
+      throw const AuthException('Login Google dibatalkan.');
+    }
+    await Future.delayed(_networkDelay);
+
+    final normalizedEmail = _normalize(googleResult.email);
+    final user = _registeredUsers[normalizedEmail] ??
+        UserModel(
+          id: googleResult.uid,
+          name: googleResult.name,
+          email: googleResult.email,
+          phone: '',
+          role: UserRole.responden,
+        );
+    // Simpen/update registry biar login BERIKUTNYA (email/password ATAU
+    // Google lagi) konsisten ketemu user yang SAMA, bukan bikin identitas
+    // baru tiap kali dia pilih akun Google yang sama.
+    _rememberRegisteredUser(user);
+
+    return AuthSession(
+      user: user,
+      accessToken: 'firebase-${googleResult.uid}',
+      refreshToken: 'firebase-${googleResult.uid}',
     );
   }
 

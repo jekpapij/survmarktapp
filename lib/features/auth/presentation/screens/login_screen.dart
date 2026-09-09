@@ -48,6 +48,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _rememberMe = false;
+  bool _isGoogleSubmitting = false;
 
   @override
   void initState() {
@@ -81,6 +82,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           password: _passwordController.text,
         );
     if (!mounted || !success) return;
+    final user = ref.read(authNotifierProvider).user;
+    if (user != null) context.go(AppRoutes.homeForRole(user.role));
+  }
+
+  /// "Masuk dengan Google" — SIMULASI dummy (bukan snackbar "belum
+  /// tersedia" lagi), lewat pipeline `AuthNotifier`/`AuthRepositoryImpl`
+  /// yang sama persis kayak `_submit()` di atas, jadi hasilnya juga
+  /// ke-cache ke Secure Storage kayak login biasa. Google Sign-In BENERAN
+  /// (Firebase OAuth) tetap scope CPMK 5 — lihat catatan lengkap di
+  /// `AuthRemoteDataSourceMock.loginWithGoogle`.
+  Future<void> _submitGoogle() async {
+    setState(() => _isGoogleSubmitting = true);
+    final success = await ref.read(authNotifierProvider.notifier).loginWithGoogle();
+    if (!mounted) return;
+    setState(() => _isGoogleSubmitting = false);
+    if (!success) return;
     final user = ref.read(authNotifierProvider).user;
     if (user != null) context.go(AppRoutes.homeForRole(user.role));
   }
@@ -208,11 +225,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 SurvMarktButton(
                   label: 'Masuk dengan Google',
                   variant: SurvMarktButtonVariant.outline,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Login dengan Google belum tersedia.')),
-                    );
-                  },
+                  isLoading: _isGoogleSubmitting,
+                  onPressed: _isGoogleSubmitting ? null : _submitGoogle,
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 Center(

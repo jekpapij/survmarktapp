@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../../core/network/firebase_google_auth_service.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_local_datasource.dart';
@@ -12,11 +13,14 @@ class AuthRepositoryImpl implements AuthRepository {
   const AuthRepositoryImpl({
     required AuthRemoteDataSource remoteDataSource,
     required AuthLocalDataSource localDataSource,
+    required FirebaseGoogleAuthService googleAuthService,
   })  : _remoteDataSource = remoteDataSource,
-        _localDataSource = localDataSource;
+        _localDataSource = localDataSource,
+        _googleAuthService = googleAuthService;
 
   final AuthRemoteDataSource _remoteDataSource;
   final AuthLocalDataSource _localDataSource;
+  final FirebaseGoogleAuthService _googleAuthService;
 
   @override
   Future<Either<Failure, UserEntity>> login({
@@ -42,6 +46,30 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(ValidationFailure(e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
+    } catch (_) {
+      return const Left(ServerFailure());
+    }
+  }
+
+  /// "Masuk dengan Google" — reuse PERSIS pola caching `login()` di atas
+  /// (`cacheSession` + `saveLastLoginIdentifier`), jadi abis "login Google"
+  /// auto-login (`checkAuthStatus`) & varian "Selamat Datang Kembali" di
+  /// `LoginScreen` tetap jalan normal, sama kayak abis login email/HP biasa.
+  @override
+  Future<Either<Failure, UserEntity>> loginWithGoogle() async {
+    try {
+      final session = await _remoteDataSource.loginWithGoogle();
+      await _localDataSource.cacheSession(
+        user: session.user,
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
+      );
+      await _localDataSource.saveLastLoginIdentifier(session.user.email);
+      return Right(session.user);
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on AuthException catch (e) {
+      return Left(AuthFailure(e.message));
     } catch (_) {
       return const Left(ServerFailure());
     }
@@ -86,6 +114,20 @@ class AuthRepositoryImpl implements AuthRepository {
     } catch (_) {
       // Tetap lanjut clear sesi lokal walau call logout ke server gagal
       // (misal token udah expired duluan) — user harus tetap bisa "keluar".
+    }
+    try {
+      // Update — Google Sign-In BENERAN: clear juga sesi Google/Firebase-
+      // nya sendiri, BUKAN cuma token app — kalau nggak, `signIn()`
+      // berikutnya auto-pilih akun Google yang sama tanpa nampilin dialog
+      // lagi (nggak kerasa kayak "keluar" beneran dari sisi Google). Aman
+      // buat user yang TIDAK PERNAH login pakai Google sama sekali —
+      // `FirebaseGoogleAuthService.signOut()` no-op kalau emang belum ada
+      // sesi Google/Firebase buat di-clear.
+      await _googleAuthService.signOut();
+    } catch (_) {
+      // Sama alasannya kayak di atas — jangan sampai logout GAGAL TOTAL
+      // cuma gara-gara sign-out Google/Firebase error (mis. belum ada
+      // sesi Firebase sama sekali).
     } finally {
       await _localDataSource.clearSession();
     }

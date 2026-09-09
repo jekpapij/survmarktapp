@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/errors/exceptions.dart';
+import '../../../../core/network/firebase_google_auth_service.dart';
 import '../models/user_model.dart';
 
 /// Hasil login dari server: user + token pair. Cuma dipakai internal di
@@ -20,6 +21,19 @@ class AuthSession {
 
 abstract class AuthRemoteDataSource {
   Future<AuthSession> login({required String identifier, required String password});
+
+  /// "Masuk dengan Google" — Google Sign-In BENERAN lewat Firebase
+  /// Authentication (`FirebaseGoogleAuthService`, di-inject ke KEDUA
+  /// implementasi di bawah — identitas Google-nya SELALU nyata, terlepas
+  /// dari `ApiConstants.useMockBackend`; yang beda cuma REST call
+  /// SESUDAHNYA ke backend mock/live). Ditaruh di kontrak yang sama kayak
+  /// `login` (bukan alur terpisah) biar `AuthRepositoryImpl` bisa reuse
+  /// persis cara nge-cache session yang sama (token + user via
+  /// `AuthLocalDataSource`) — tanpa itu, hasil "login Google" nggak akan
+  /// ke-persist ke Secure Storage kayak login biasa. Lihat catatan
+  /// lengkap di `FirebaseGoogleAuthService` buat checklist setup Firebase
+  /// Console yang WAJIB kelar duluan (SHA-1, `google-services.json`, dst).
+  Future<AuthSession> loginWithGoogle();
 
   Future<UserModel> register({
     required String name,
@@ -66,9 +80,10 @@ abstract class AuthRemoteDataSource {
 /// disiapin persis sesuai kontrak di PROMPT_SPEC.md biar tinggal pasang
 /// begitu backend siap.
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
-  const AuthRemoteDataSourceImpl(this._dio);
+  const AuthRemoteDataSourceImpl(this._dio, this._googleAuthService);
 
   final Dio _dio;
+  final FirebaseGoogleAuthService _googleAuthService;
 
   @override
   Future<AuthSession> login({required String identifier, required String password}) async {
@@ -76,6 +91,28 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       final response = await _dio.post<Map<String, dynamic>>(
         ApiConstants.login,
         data: {'email': identifier, 'password': password},
+      );
+      final data = response.data!;
+      return AuthSession(
+        user: UserModel.fromJson(data['user'] as Map<String, dynamic>),
+        accessToken: data['accessToken'] as String,
+        refreshToken: data['refreshToken'] as String,
+      );
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+  }
+
+  @override
+  Future<AuthSession> loginWithGoogle() async {
+    final googleResult = await _googleAuthService.signIn();
+    if (googleResult == null) {
+      throw const AuthException('Login Google dibatalkan.');
+    }
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        ApiConstants.googleLogin,
+        data: {'idToken': googleResult.idToken},
       );
       final data = response.data!;
       return AuthSession(

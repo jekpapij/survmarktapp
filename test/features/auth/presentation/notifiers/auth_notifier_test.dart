@@ -5,6 +5,7 @@ import 'package:survmarkt/features/auth/domain/entities/user_entity.dart';
 import 'package:survmarkt/features/auth/domain/repositories/auth_repository.dart';
 import 'package:survmarkt/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:survmarkt/features/auth/domain/usecases/login_usecase.dart';
+import 'package:survmarkt/features/auth/domain/usecases/login_with_google_usecase.dart';
 import 'package:survmarkt/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:survmarkt/features/auth/domain/usecases/register_usecase.dart';
 import 'package:survmarkt/features/auth/presentation/notifiers/auth_notifier.dart';
@@ -25,7 +26,19 @@ class _FakeAuthRepository implements AuthRepository {
     required String identifier,
     required String password,
   }) async {
-    return loginResult ?? Left(const AuthFailure());
+    return loginResult ?? const Left(AuthFailure());
+  }
+
+  // Bugfix (laporan user — `flutter analyze` gagal, "Missing concrete
+  // implementation of 'abstract class AuthRepository.loginWithGoogle'"):
+  // method ini ketinggalan pas `AuthRepository` diperluas buat "Masuk
+  // dengan Google" (dua update terpisah setelah test ini ditulis) — fake
+  // repo di sini WAJIB implement SEMUA method abstract-nya. Reuse
+  // `loginResult` yang SAMA (bukan field terpisah) — cukup buat test yang
+  // ada sekarang, dua-duanya balikin `Either<Failure, UserEntity>`.
+  @override
+  Future<Either<Failure, UserEntity>> loginWithGoogle() async {
+    return loginResult ?? const Left(AuthFailure());
   }
 
   @override
@@ -36,7 +49,7 @@ class _FakeAuthRepository implements AuthRepository {
     required String password,
     required UserRole role,
   }) async {
-    return Right(testUser);
+    return const Right(testUser);
   }
 
   @override
@@ -77,7 +90,7 @@ class _FakeAuthRepository implements AuthRepository {
     String education = '',
     String fieldOfWork = '',
   }) async =>
-      Right(testUser);
+      const Right(testUser);
 }
 
 const testUser = UserEntity(
@@ -91,6 +104,9 @@ const testUser = UserEntity(
 AuthNotifier _buildNotifier(_FakeAuthRepository repo) {
   return AuthNotifier(
     loginUseCase: LoginUseCase(repo),
+    // Bugfix (sama kayak catatan di `loginWithGoogle()` atas) —
+    // `AuthNotifier` sekarang butuh `loginWithGoogleUseCase` juga.
+    loginWithGoogleUseCase: LoginWithGoogleUseCase(repo),
     registerUseCase: RegisterUseCase(repo),
     logoutUseCase: LogoutUseCase(repo),
     getCurrentUserUseCase: GetCurrentUserUseCase(repo),
@@ -125,7 +141,7 @@ void main() {
     });
 
     test('gagal → state akhir error berisi pesan, return false', () async {
-      fakeRepo.loginResult = Left(const AuthFailure('Email/No. HP atau password salah.'));
+      fakeRepo.loginResult = const Left(AuthFailure('Email/No. HP atau password salah.'));
 
       final success = await notifier.login(identifier: 'salah@test.com', password: 'salah');
 

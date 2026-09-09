@@ -12,6 +12,11 @@ abstract class AuthRepository {
     required String password,
   });
 
+  /// "Masuk dengan Google" — SIMULASI dummy, lihat catatan lengkap di
+  /// `AuthRemoteDataSourceMock.loginWithGoogle`. Google Sign-In BENERAN
+  /// tetap scope CPMK 5.
+  Future<Either<Failure, UserEntity>> loginWithGoogle();
+
   Future<Either<Failure, UserEntity>> register({
     required String name,
     required String phone,

@@ -5,6 +5,19 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Firebase (Google Sign-In BENERAN) — plugin di-apply KONDISIONAL:
+// `google-services.json` BELUM ada sampai setup Firebase Console kelar
+// (bikin project, daftarin app Android package `com.survmarkt.survmarkt`
+// + SHA-1 debug keystore, aktifin provider Google, download file ini —
+// lihat checklist lengkap di CLAUDE.md/chat). Kalau plugin di-apply TANPA
+// file itu ada, BUILD GAGAL TOTAL (bukan cuma fitur Google doang yang
+// error) — makanya di-guard `if (file(...).exists())`. Begitu file itu
+// ditaruh di folder `android/app/` ini, baris ini otomatis aktifin
+// plugin-nya di build berikutnya, TANPA perlu ubah apa-apa lagi di sini.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "com.survmarkt.survmarkt"
     compileSdk = 36

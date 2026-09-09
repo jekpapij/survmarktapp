@@ -24,21 +24,63 @@ import 'wallet_remote_datasource.dart';
 /// masuk, expense = uang keluar), cuma labelnya beda konteks. `forRole ==
 /// null` ATAU `peneliti` -> perilaku LAMA (researcher), nggak berubah.
 class WalletRemoteDataSourceMock implements WalletRemoteDataSource {
-  const WalletRemoteDataSourceMock();
+  // Update CPMK 4: BUKAN `const` lagi — saldo & daftar transaksi sekarang
+  // STATEFUL (pola sama kayak `AdminRemoteDataSourceMock`), karena
+  // `requestWithdrawal` beneran motong saldo & nambah baris transaksi baru
+  // (dipakai pas online LANGSUNG, atau pas replay antrean offline — lihat
+  // `WalletRepositoryImpl.syncPendingWithdrawals`). Instance-nya di-wiring
+  // sebagai singleton lewat `Provider` biasa (bukan `autoDispose`) di
+  // `wallet_providers.dart`, pola sama persis kayak `authRemoteDataSourceProvider`.
+  WalletRemoteDataSourceMock()
+      : _researcherTransactions = List.of(_seedResearcherTransactions),
+        _respondentTransactions = List.of(_seedRespondentTransactions),
+        _researcherBalance = 350000,
+        _respondentBalance = 185000;
 
   static const _networkDelay = Duration(milliseconds: 700);
+
+  final List<TransactionEntity> _researcherTransactions;
+  final List<TransactionEntity> _respondentTransactions;
+  int _researcherBalance;
+  int _respondentBalance;
+  int _withdrawalSeq = 0;
 
   @override
   Future<int> getBalance({UserRole? forRole}) async {
     await Future.delayed(_networkDelay);
-    return forRole == UserRole.responden ? 185000 : 350000;
+    return forRole == UserRole.responden ? _respondentBalance : _researcherBalance;
   }
 
   @override
   Future<List<TransactionEntity>> getTransactions({UserRole? forRole}) async {
     await Future.delayed(_networkDelay);
-    if (forRole == UserRole.responden) return _respondentTransactions;
-    return _researcherTransactions;
+    if (forRole == UserRole.responden) return List.unmodifiable(_respondentTransactions);
+    return List.unmodifiable(_researcherTransactions);
+  }
+
+  /// CPMK 4 — simulasi "server" nerima permintaan Tarik Dana: potong saldo
+  /// & catet transaksi `expense` baru (paling atas/terbaru). Nggak ada
+  /// validasi saldo minimum (di luar scope demo offline-first ini) — murni
+  /// buat buktiin alur baca-cache/tulis-offline/sync-online-nya jalan.
+  @override
+  Future<TransactionEntity> requestWithdrawal({required UserRole forRole, required int amount}) async {
+    await Future.delayed(_networkDelay);
+    _withdrawalSeq++;
+    final tx = TransactionEntity(
+      id: 'wd-sync-$_withdrawalSeq',
+      type: TransactionType.expense,
+      title: forRole == UserRole.responden ? 'Penarikan ke Bank (Tarik Dana)' : 'Deposit Dana',
+      amount: amount,
+      date: DateTime.now(),
+    );
+    if (forRole == UserRole.responden) {
+      _respondentBalance -= amount;
+      _respondentTransactions.insert(0, tx);
+    } else {
+      _researcherBalance -= amount;
+      _researcherTransactions.insert(0, tx);
+    }
+    return tx;
   }
 
   // Update 2026-09-09 (bugfix): `static final`, BUKAN `static const` —
@@ -50,7 +92,7 @@ class WalletRemoteDataSourceMock implements WalletRemoteDataSource {
   // const / non_constant_list_element / const_initialized_with_non_
   // constant_value). `static final` cukup single-assignment, nggak
   // wajib compile-time-constant — lihat CLAUDE.md buat detail lengkap.
-  static final _researcherTransactions = [
+  static final _seedResearcherTransactions = [
     TransactionEntity(
       id: 'trx-1',
       type: TransactionType.deposit,
@@ -95,7 +137,7 @@ class WalletRemoteDataSourceMock implements WalletRemoteDataSource {
   /// polos — lihat `Formatters.dateTimeShort` (nampilin jam kalau ada,
   /// nyembunyiin kalau 00:00 biar `_researcherTransactions` di atas nggak
   /// ikut kena efek nampilin "• 00:00" palsu).
-  static final _respondentTransactions = [
+  static final _seedRespondentTransactions = [
     TransactionEntity(
       id: 'rtrx-1',
       type: TransactionType.deposit,
