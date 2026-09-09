@@ -29,14 +29,24 @@ import 'notification_remote_datasource.dart';
 /// internal `RespondentRemoteDataSourceMock`/`WalletRemoteDataSourceMock`
 /// bakal ngelanggar batas Clean Architecture antar-fitur).
 ///
+/// **Update 2026-09-09 (lanjutan) — [_adminSeed] baru, ditambahin PAS
+/// bikin fitur `features/admin/`:** ketauan kalau tanpa ini, akun Admin
+/// bakal ke-fallback nampilin [_researcherSeed] (lihat [_roleOfId] versi
+/// lama yang cuma cek boolean `rnotif-` vs bukan) — notifikasi "Responden
+/// baru masuk"/dst. nggak masuk akal buat Admin. Sekarang [_roleOfId] jadi
+/// 3-arah lewat prefix id (`notif-`/`rnotif-`/`anotif-`), bukan boolean lagi.
+/// [_adminSeed] CROSS-REFERENCE ke `AdminRemoteDataSourceMock` (withdrawal &
+/// audit log) — pola presis sama kayak [_respondentSeed].
+///
 /// Stateful/mutable (pola sama kayak `ResearcherRemoteDataSourceMock`
 /// setelah update 2026-09-08) biar "tandai (semua) dibaca" beneran keliatan
 /// efeknya pas list di-refresh, bukan cuma respon hardcoded yang sama tiap
-/// fetch. Kedua seed digabung jadi 1 list internal, dibedain lewat prefix
-/// id (`notif-` vs `rnotif-`) — pola sama kayak `seed-activity-N` vs
+/// fetch. Ketiga seed digabung jadi 1 list internal, dibedain lewat prefix
+/// id (`notif-`/`rnotif-`/`anotif-`) — pola sama kayak `seed-activity-N` vs
 /// `discover-N` di `RespondentRemoteDataSourceMock`.
 class NotificationRemoteDataSourceMock implements NotificationRemoteDataSource {
-  NotificationRemoteDataSourceMock() : _notifications = List.of([..._researcherSeed, ..._respondentSeed]);
+  NotificationRemoteDataSourceMock()
+      : _notifications = List.of([..._researcherSeed, ..._respondentSeed, ..._adminSeed]);
 
   static const _networkDelay = Duration(milliseconds: 500);
 
@@ -132,12 +142,65 @@ class NotificationRemoteDataSourceMock implements NotificationRemoteDataSource {
     ),
   ];
 
-  static bool _isRespondentId(String id) => id.startsWith('rnotif-');
+  /// Cross-reference ke `AdminRemoteDataSourceMock` — 7 withdrawal pending
+  /// seed (2 nama pertama, Siti Nurhaliza & Budi Santoso, PERSIS sama kayak
+  /// preview "PERLU TINDAKAN" di `admin-dashboard`) & 2 entri pertama
+  /// `_auditLog` (hapus survey "Riset Pasar FMCG Jakarta", role Rina
+  /// Marlina diubah).
+  static final List<NotificationEntity> _adminSeed = [
+    NotificationEntity(
+      id: 'anotif-1',
+      type: NotificationType.payment,
+      title: '7 withdrawal menunggu persetujuan',
+      body: 'Termasuk Siti Nurhaliza (Rp 250.000) & Budi Santoso (Rp 150.000). Cek tab Withdrawal buat proses.',
+      createdAt: _now.subtract(const Duration(minutes: 25)),
+    ),
+    NotificationEntity(
+      id: 'anotif-2',
+      type: NotificationType.system,
+      title: 'Survey dihapus oleh peneliti',
+      body: '"Riset Pasar FMCG Jakarta" dihapus oleh Andi Wijaya (Peneliti). Tercatat di Audit Log.',
+      createdAt: _now.subtract(const Duration(hours: 4)),
+    ),
+    NotificationEntity(
+      id: 'anotif-3',
+      type: NotificationType.system,
+      title: 'Role akun diubah',
+      body: 'Role akun Rina Marlina diubah dari Responden ke Peneliti. Tercatat di Audit Log.',
+      createdAt: _now.subtract(const Duration(days: 1, hours: 2)),
+      isRead: true,
+    ),
+    NotificationEntity(
+      id: 'anotif-4',
+      type: NotificationType.payment,
+      title: 'Withdrawal disetujui',
+      body: 'Withdrawal Rp 250.000 untuk Siti Nurhaliza berhasil disetujui & tercatat di Audit Log.',
+      createdAt: _now.subtract(const Duration(days: 3, hours: 5)),
+      isRead: true,
+    ),
+    NotificationEntity(
+      id: 'anotif-5',
+      type: NotificationType.system,
+      title: 'Selamat datang di Panel Admin',
+      body: 'Kelola withdrawal responden, pantau audit log, dan platform SurvMarkt langsung dari sini.',
+      createdAt: _now.subtract(const Duration(days: 6)),
+      isRead: true,
+    ),
+  ];
+
+  /// Role pemilik 1 notifikasi, ditentuin dari prefix id-nya — bukan lagi
+  /// boolean `rnotif-` vs bukan (versi lama), sekarang 3-arah biar Admin
+  /// dapet seed-nya sendiri, bukan ke-fallback ke seed Peneliti.
+  static UserRole _roleOfId(String id) {
+    if (id.startsWith('anotif-')) return UserRole.admin;
+    if (id.startsWith('rnotif-')) return UserRole.responden;
+    return UserRole.peneliti;
+  }
 
   @override
   Future<List<NotificationEntity>> getNotifications({UserRole? forRole}) async {
     await Future.delayed(_networkDelay);
-    final scoped = _notifications.where((n) => _isRespondentId(n.id) == (forRole == UserRole.responden)).toList();
+    final scoped = _notifications.where((n) => _roleOfId(n.id) == (forRole ?? UserRole.peneliti)).toList();
     scoped.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return scoped;
   }
@@ -157,7 +220,7 @@ class NotificationRemoteDataSourceMock implements NotificationRemoteDataSource {
     await Future.delayed(_networkDelay);
     for (var i = 0; i < _notifications.length; i++) {
       final n = _notifications[i];
-      if (_isRespondentId(n.id) == (forRole == UserRole.responden)) {
+      if (_roleOfId(n.id) == (forRole ?? UserRole.peneliti)) {
         _notifications[i] = n.copyWith(isRead: true);
       }
     }

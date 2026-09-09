@@ -217,11 +217,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: AppSpacing.lg),
                 Center(
                   child: TextButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Login admin akan diimplementasikan terpisah.')),
-                      );
-                    },
+                    // Update 2026-09-09: bukan stub SnackBar lagi — beneran
+                    // ngelink ke `admin-login` (frame Figma node 77:3299,
+                    // fileKey sh3QGUb2P6BHPTIbtxXjOT). `push` (bukan `go`)
+                    // biar tombol back di layar admin-login balik natural
+                    // ke sini, pola sama kayak `forgotPassword`/`register`.
+                    onPressed: () => context.push(AppRoutes.adminLogin),
                     child: const Text('Masuk Sebagai Admin', style: AppTypography.bodyMedium),
                   ),
                 ),

@@ -1,9 +1,12 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'core/constants/app_colors.dart';
+import 'features/admin/presentation/screens/admin_audit_log_screen.dart';
+import 'features/admin/presentation/screens/admin_dashboard_screen.dart';
+import 'features/admin/presentation/screens/admin_profile_screen.dart';
+import 'features/admin/presentation/screens/admin_withdrawal_screen.dart';
 import 'features/auth/domain/entities/user_entity.dart';
+import 'features/auth/presentation/screens/admin_login_screen.dart';
 import 'features/auth/presentation/screens/change_password_screen.dart';
 import 'features/auth/presentation/screens/forgot_password_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
@@ -77,6 +80,17 @@ abstract class AppRoutes {
   // `respondent-edit-profile` (node 77:3214), lihat CLAUDE.md.
   static const respondentEditProfile = '/respondent/profile/edit';
   static const adminHome = '/admin/home';
+
+  // Update 2026-09-09: bukan placeholder lagi — 5 frame Figma `admin-*`
+  // (login `77:3299`, dashboard `88:52`, withdrawal `86:52`, audit-log
+  // `86:170`, profil `89:4492`) ditranslate sekaligus. `adminLogin` PUSH
+  // dari `login_screen.dart` (bukan nested di bawah `/admin/...` yang
+  // butuh session admin dulu) — pola sama kayak `register`/`forgotPassword`,
+  // karena ini bagian dari ALUR AUTH, dijalanin SEBELUM ada session admin.
+  static const adminLogin = '/admin/login';
+  static const adminWithdrawal = '/admin/withdrawal';
+  static const adminAuditLog = '/admin/audit-log';
+  static const adminProfile = '/admin/profile';
 
   static String homeForRole(UserRole role) => switch (role) {
         UserRole.peneliti => researcherHome,
@@ -181,47 +195,31 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.respondentEditProfile,
         builder: (context, state) => const RespondentEditProfileScreen(),
       ),
+      // Update 2026-09-09: login Admin — dummy full, TANPA alur register
+      // (lihat CLAUDE.md "Keputusan produk penting" & doc-comment
+      // `AdminLoginScreen`).
+      GoRoute(
+        path: AppRoutes.adminLogin,
+        builder: (context, state) => const AdminLoginScreen(),
+      ),
+      // Update 2026-09-09: bukan placeholder lagi — udah ditranslate dari
+      // frame Figma `admin-dashboard` (node 88:52), lihat CLAUDE.md.
       GoRoute(
         path: AppRoutes.adminHome,
-        builder: (context, state) => const _PlaceholderHomeScreen(
-          title: 'Dashboard Admin',
-          subtitle: 'Layar ini nyusul pas fitur Admin diimplementasi (CPMK 3 lanjutan).',
-        ),
+        builder: (context, state) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminWithdrawal,
+        builder: (context, state) => const AdminWithdrawalScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminAuditLog,
+        builder: (context, state) => const AdminAuditLogScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.adminProfile,
+        builder: (context, state) => const AdminProfileScreen(),
       ),
     ],
   );
 });
-
-/// Stand-in sementara biar alur login end-to-end bisa dites (login berhasil
-/// -> mendarat di sini), sampai dashboard beneran per role digarap.
-class _PlaceholderHomeScreen extends StatelessWidget {
-  const _PlaceholderHomeScreen({required this.title, required this.subtitle});
-
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.construction_outlined, size: 48, color: AppColors.slate400),
-              const SizedBox(height: 16),
-              Text(subtitle, textAlign: TextAlign.center),
-              const SizedBox(height: 24),
-              TextButton(
-                onPressed: () => context.go(AppRoutes.login),
-                child: const Text('Kembali ke Login'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
