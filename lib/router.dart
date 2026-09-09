@@ -15,6 +15,7 @@ import 'features/researcher/presentation/screens/researcher_dashboard_screen.dar
 import 'features/researcher/presentation/screens/researcher_profile_edit_screen.dart';
 import 'features/researcher/presentation/screens/researcher_profile_screen.dart';
 import 'features/researcher/presentation/screens/researcher_wallet_screen.dart';
+import 'features/respondent/presentation/screens/respondent_discover_screen.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
 
 /// Route constants — SCREAMING_SNAKE_CASE per PROMPT_SPEC.md §2.3 (di sini
@@ -42,7 +43,8 @@ abstract class AppRoutes {
 
   // Placeholder — dashboard beneran per role nyusul pas fitur
   // researcher/respondent/admin diimplementasi (di luar scope translate
-  // auth ini).
+  // auth ini). Update 2026-09-09: researcher & respondent bukan placeholder
+  // lagi (lihat GoRoute masing-masing di bawah) — admin masih.
   static const researcherHome = '/researcher/home';
   static const createSurvey = '/researcher/create-survey';
   static const researcherWallet = '/researcher/wallet';
@@ -118,12 +120,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.notifications,
         builder: (context, state) => const NotificationsScreen(),
       ),
+      // Update 2026-09-09: bukan placeholder lagi — udah ditranslate dari
+      // frame Figma `respondent-discover` (node 77:2719), lihat CLAUDE.md.
+      // 4 frame respondent lain (activity/wallet/edit-profile/profil)
+      // masih menyusul, jadi tab lain di bottom-nav layar ini masih stub.
       GoRoute(
         path: AppRoutes.respondentHome,
-        builder: (context, state) => const _PlaceholderHomeScreen(
-          title: 'Discover',
-          subtitle: 'Layar ini nyusul pas fitur Respondent diimplementasi (CPMK 3 lanjutan).',
-        ),
+        builder: (context, state) => const RespondentDiscoverScreen(),
       ),
       GoRoute(
         path: AppRoutes.adminHome,
