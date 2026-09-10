@@ -24,14 +24,22 @@ import '../state/auth_state.dart';
 /// `UserEntity.role` doc-comment: "Admin (dibuat manual, bukan lewat
 /// register-page)".
 ///
-/// Auth mock-nya SENDIRI NGGAK PERLU DIUBAH buat ini — `AuthRemoteDataSourceMock.
-/// _dummyUserFor` udah dari lama nge-assign `UserRole.admin` buat identifier
-/// apapun yang ngandung substring "admin" (case-insensitive), lihat
-/// `auth_remote_datasource_mock.dart`. Field identifier di sini di-prefill
-/// `admin@survmarkt.com` (ngandung "admin") + password dummy `admin123`
-/// (BUKAN literal `"salah"`, yang di mock jadi trigger `AuthException`) —
-/// jadi begitu di-tap "Masuk", langsung lolos & `authNotifierProvider`
-/// nyimpen user dengan role admin, persis alur `LoginScreen._submit()`.
+/// **Update/bugfix 2026-09-10:** awalnya `_submit()` reuse
+/// `authNotifierProvider.notifier.login(identifier, password)` yang sama
+/// kayak `LoginScreen`, mengandalkan `AuthRemoteDataSourceMock._dummyUserFor`
+/// nebak role dari substring "admin" di identifier — TAPI begitu CPMK 5
+/// nyalain `ApiConstants.useFirebaseBackend=true` (buat testing Auth+Wallet
+/// Researcher/Respondent beneran), datasource yang aktif app-wide ganti ke
+/// Firebase buat SEMUA layar login (termasuk ini), dan kredensial dummy
+/// `admin@survmarkt.com`/`admin123` ditolak beneran sama Firebase Auth
+/// (akun itu emang nggak pernah didaftarin di sana) — muncul error
+/// "Email/No. HP atau password salah.". Fix: `_submit()` sekarang manggil
+/// `loginAsDummyAdmin()` (method BARU di `AuthNotifier`, lihat doc-comment
+/// lengkap di `AuthRepository.loginAsDummyAdmin`) yang SAMA SEKALI TIDAK
+/// nyentuh remote datasource apapun — Admin tetap FULL DUMMY 1-tap terlepas
+/// dari backend apa yang lagi aktif, sesuai keputusan produk 2026-09-09
+/// (field identifier/password di bawah TETAP di-prefill & ditampilin, cuma
+/// buat visual, isinya nggak lagi beneran dipakai/dikirim kemana-mana).
 class AdminLoginScreen extends ConsumerStatefulWidget {
   const AdminLoginScreen({super.key});
 
@@ -53,10 +61,11 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    final success = await ref.read(authNotifierProvider.notifier).login(
-          identifier: _identifierController.text.trim(),
-          password: _passwordController.text,
-        );
+    // Bugfix 2026-09-10: BUKAN `login(identifier, password)` lagi — lihat
+    // doc-comment class di atas. `loginAsDummyAdmin()` nggak butuh 2 field
+    // ini sama sekali (dummy penuh, local-only), tapi form tetap divalidasi
+    // & ditampilin biar UX-nya nggak berubah dari sebelumnya.
+    final success = await ref.read(authNotifierProvider.notifier).loginAsDummyAdmin();
     if (!mounted || !success) return;
     final user = ref.read(authNotifierProvider).user;
     if (user != null) context.go(AppRoutes.homeForRole(user.role));

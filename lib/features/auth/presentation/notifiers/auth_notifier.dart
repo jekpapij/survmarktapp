@@ -6,6 +6,7 @@ import '../../domain/entities/user_entity.dart';
 import '../../domain/usecases/cancel_google_signin_usecase.dart';
 import '../../domain/usecases/complete_google_registration_usecase.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
+import '../../domain/usecases/login_as_dummy_admin_usecase.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/login_with_google_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
@@ -15,6 +16,7 @@ import '../state/auth_state.dart';
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier({
     required LoginUseCase loginUseCase,
+    required LoginAsDummyAdminUseCase loginAsDummyAdminUseCase,
     required LoginWithGoogleUseCase loginWithGoogleUseCase,
     required CompleteGoogleRegistrationUseCase completeGoogleRegistrationUseCase,
     required CancelGoogleSignInUseCase cancelGoogleSignInUseCase,
@@ -22,6 +24,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required LogoutUseCase logoutUseCase,
     required GetCurrentUserUseCase getCurrentUserUseCase,
   })  : _loginUseCase = loginUseCase,
+        _loginAsDummyAdminUseCase = loginAsDummyAdminUseCase,
         _loginWithGoogleUseCase = loginWithGoogleUseCase,
         _completeGoogleRegistrationUseCase = completeGoogleRegistrationUseCase,
         _cancelGoogleSignInUseCase = cancelGoogleSignInUseCase,
@@ -31,6 +34,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         super(const AuthState.initial());
 
   final LoginUseCase _loginUseCase;
+  final LoginAsDummyAdminUseCase _loginAsDummyAdminUseCase;
   final LoginWithGoogleUseCase _loginWithGoogleUseCase;
   final CompleteGoogleRegistrationUseCase _completeGoogleRegistrationUseCase;
   final CancelGoogleSignInUseCase _cancelGoogleSignInUseCase;
@@ -52,6 +56,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<bool> login({required String identifier, required String password}) async {
     state = const AuthState.loading();
     final result = await _loginUseCase(LoginParams(identifier: identifier, password: password));
+    return result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+        return false;
+      },
+      (user) {
+        state = AuthState.authenticated(user);
+        return true;
+      },
+    );
+  }
+
+  /// Bugfix 2026-09-10 — "Masuk sebagai Admin" (`AdminLoginScreen`). Lihat
+  /// doc-comment lengkap di `AuthRepository.loginAsDummyAdmin` buat kenapa
+  /// ini method TERPISAH dari `login()` biasa (bukan sekadar dipanggil
+  /// dengan identifier/password dummy) — intinya method ini sengaja SKIP
+  /// remote datasource (Mock maupun Firebase) sepenuhnya, jadi Admin tetap
+  /// 1-tap masuk apapun status `ApiConstants.useFirebaseBackend`-nya.
+  Future<bool> loginAsDummyAdmin() async {
+    state = const AuthState.loading();
+    final result = await _loginAsDummyAdminUseCase(const NoParams());
     return result.fold(
       (failure) {
         state = AuthState.error(failure.message);

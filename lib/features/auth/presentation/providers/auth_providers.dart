@@ -13,6 +13,7 @@ import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/cancel_google_signin_usecase.dart';
 import '../../domain/usecases/complete_google_registration_usecase.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
+import '../../domain/usecases/login_as_dummy_admin_usecase.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/login_with_google_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
@@ -95,6 +96,12 @@ final loginWithGoogleUseCaseProvider = Provider<LoginWithGoogleUseCase>((ref) {
   return LoginWithGoogleUseCase(ref.watch(authRepositoryProvider));
 });
 
+/// Bugfix 2026-09-10 — lihat doc-comment lengkap di
+/// `AuthRepository.loginAsDummyAdmin`.
+final loginAsDummyAdminUseCaseProvider = Provider<LoginAsDummyAdminUseCase>((ref) {
+  return LoginAsDummyAdminUseCase(ref.watch(authRepositoryProvider));
+});
+
 final completeGoogleRegistrationUseCaseProvider = Provider<CompleteGoogleRegistrationUseCase>((ref) {
   return CompleteGoogleRegistrationUseCase(ref.watch(authRepositoryProvider));
 });
@@ -124,6 +131,7 @@ final lastLoginIdentifierProvider = FutureProvider<String?>((ref) {
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
     loginUseCase: ref.watch(loginUseCaseProvider),
+    loginAsDummyAdminUseCase: ref.watch(loginAsDummyAdminUseCaseProvider),
     loginWithGoogleUseCase: ref.watch(loginWithGoogleUseCaseProvider),
     completeGoogleRegistrationUseCase: ref.watch(completeGoogleRegistrationUseCaseProvider),
     cancelGoogleSignInUseCase: ref.watch(cancelGoogleSignInUseCaseProvider),

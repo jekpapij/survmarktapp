@@ -13,6 +13,23 @@ abstract class AuthRepository {
     required String password,
   });
 
+  /// Bugfix (2026-09-10, ketemu user pas CPMK 5 Firebase udah aktif) —
+  /// "Masuk sebagai Admin" (`AdminLoginScreen`) SEHARUSNYA tetap FULL DUMMY
+  /// (keputusan produk 2026-09-09, TIDAK ADA alur "Daftar sebagai Admin"),
+  /// TAPI karena layar itu sebelumnya reuse `login()` biasa, begitu
+  /// `ApiConstants.useFirebaseBackend=true` di-nyalain (buat testing CPMK 5
+  /// Auth+Wallet Researcher/Respondent), kredensial dummy `admin@survmarkt.
+  /// com`/`admin123` ikut kekirim ke Firebase Auth beneran — yang jelas
+  /// nolak (`"Email/No. HP atau password salah."`) karena akun itu emang
+  /// nggak pernah didaftarin di Firebase. Method BARU ini sengaja SAMA
+  /// SEKALI TIDAK manggil `_remoteDataSource` (Mock ATAU Firebase, dua-
+  /// duanya di-skip) — langsung cache sesi dummy ke local storage doang,
+  /// PERSIS pola lama `AuthRemoteDataSourceMock._dummyUserFor('admin')`,
+  /// biar Admin tetap bisa "masuk" 1-tap terlepas dari backend apa yang lagi
+  /// aktif (konsisten sama scope CPMK 5: Researcher/Respondent/Admin
+  /// survey-listing TETAP mock, cuma Auth+Wallet beneran-nya doang).
+  Future<Either<Failure, UserEntity>> loginAsDummyAdmin();
+
   /// "Masuk dengan Google" — Google Sign-In BENERAN via Firebase, lihat
   /// catatan lengkap di `FirebaseGoogleAuthService`/
   /// `AuthRemoteDataSourceMock.loginWithGoogle`.

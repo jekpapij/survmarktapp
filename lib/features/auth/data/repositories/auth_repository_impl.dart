@@ -52,6 +52,37 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  /// Lihat doc-comment lengkap di `AuthRepository.loginAsDummyAdmin` —
+  /// sengaja TIDAK menyentuh `_remoteDataSource` sama sekali (Mock maupun
+  /// Firebase), cuma cache sesi dummy langsung ke local storage. Satu-
+  /// satunya exception yang mungkin muncul di sini adalah `CacheException`
+  /// dari `cacheSession()` (mis. secure storage device-nya sendiri
+  /// bermasalah) — di-map ke `CacheFailure`, pola sama kayak
+  /// `getCurrentUser()` di bawah.
+  @override
+  Future<Either<Failure, UserEntity>> loginAsDummyAdmin() async {
+    try {
+      const user = UserModel(
+        id: 'mock-user-admin',
+        name: 'Admin Dummy',
+        email: 'admin@survmarkt.com',
+        phone: '081234567890',
+        role: UserRole.admin,
+      );
+      await _localDataSource.cacheSession(
+        user: user,
+        accessToken: 'dummy-admin-token',
+        refreshToken: 'dummy-admin-token',
+      );
+      await _localDataSource.saveLastLoginIdentifier(user.email);
+      return const Right(user);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
+    } catch (_) {
+      return const Left(ServerFailure());
+    }
+  }
+
   /// "Masuk dengan Google" — kalau akun UDAH terdaftar, reuse PERSIS pola
   /// caching `login()` di atas (`cacheSession` + `saveLastLoginIdentifier`),
   /// jadi abis "login Google" auto-login (`checkAuthStatus`) & varian
