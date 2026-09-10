@@ -1,7 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/constants/api_constants.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_typography.dart';
@@ -134,10 +138,71 @@ class _WalletBody extends StatelessWidget {
   }
 }
 
-class _BalanceHeroCard extends StatelessWidget {
+class _BalanceHeroCard extends ConsumerStatefulWidget {
   const _BalanceHeroCard({required this.balance});
 
   final int balance;
+
+  @override
+  ConsumerState<_BalanceHeroCard> createState() => _BalanceHeroCardState();
+}
+
+class _BalanceHeroCardState extends ConsumerState<_BalanceHeroCard> {
+  bool _isSubmitting = false;
+
+  /// CPMK 5 (Integration Engine) — Deposit Dana BENERAN lewat Midtrans
+  /// Sandbox (keputusan user: integrasi asli, bukan simulasi UI). Alurnya:
+  /// (1) dialog nominal -> (2) `MidtransService.createDeposit` (Supabase
+  /// Edge Function — update 2026-09-10, sebelumnya Firebase Cloud Function
+  /// — bikin transaksi Snap + dokumen Firestore `status: 'pending'`) -> (3)
+  /// buka `redirectUrl` (halaman Snap) di browser eksternal -> (4) dialog
+  /// "Menunggu Pembayaran" yang LIVE listen ke dokumen transaksi itu di
+  /// Firestore — begitu webhook `midtrans-notification-handler` (server-
+  /// to-server dari Midtrans) update status jadi 'success', dialog ini
+  /// otomatis ke-notice & nutup sendiri, saldo di-refresh. User BEBAS nutup
+  /// dialog ini manual kapan aja (mis. baru sempet bayar beberapa menit
+  /// lagi) — statusnya tetap kesimpen di Firestore, nggak hilang.
+  Future<void> _handleDepositDana() async {
+    if (!ApiConstants.useFirebaseBackend) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Deposit Dana (payment gateway) nyusul di CPMK 5.')),
+      );
+      return;
+    }
+
+    final amount = await showDialog<int>(context: context, builder: (context) => const _DepositDanaDialog());
+    if (amount == null || !mounted) return;
+
+    setState(() => _isSubmitting = true);
+    try {
+      final result = await ref.read(midtransServiceProvider).createDeposit(amount);
+      if (!mounted) return;
+
+      final launched = await launchUrl(Uri.parse(result.redirectUrl), mode: LaunchMode.externalApplication);
+      if (!launched) throw Exception('Nggak ada browser buat buka halaman pembayaran.');
+      if (!mounted) return;
+
+      final success = await showDialog<bool>(
+        context: context,
+        builder: (context) => _WaitingPaymentDialog(orderId: result.orderId),
+      );
+      if (success == true) {
+        ref.invalidate(walletProvider);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Deposit berhasil — saldo diperbarui.')),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memulai Deposit Dana: $e'), backgroundColor: AppColors.danger),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -161,7 +226,7 @@ class _BalanceHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            Formatters.rupiahFull(balance),
+            Formatters.rupiahFull(widget.balance),
             style: AppTypography.monoNumber.copyWith(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -169,23 +234,135 @@ class _BalanceHeroCard extends StatelessWidget {
             width: double.infinity,
             height: 36,
             child: ElevatedButton(
-              // Update 2026-09-08: Deposit Dana beneran butuh payment
-              // gateway (Midtrans/Xendit/Stripe sandbox) — itu scope CPMK 5
-              // (Integration Engine), sama kayak Google Sign-In. Distub
-              // dulu, bukan ditinggal diam tanpa feedback.
-              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Deposit Dana (payment gateway) nyusul di CPMK 5.')),
-              ),
+              onPressed: _isSubmitting ? null : _handleDepositDana,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
               ),
-              child: Text(
-                'Deposit Dana',
-                style: AppTypography.monoSmall.copyWith(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.amber500),
-              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.amber500),
+                    )
+                  : Text(
+                      'Deposit Dana',
+                      style: AppTypography.monoSmall.copyWith(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.amber500),
+                    ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Dialog nominal Deposit Dana — pola sama kayak `_TarikDanaDialog` di
+/// `respondent_wallet_screen.dart`, nominal default `50000`.
+class _DepositDanaDialog extends StatefulWidget {
+  const _DepositDanaDialog();
+
+  @override
+  State<_DepositDanaDialog> createState() => _DepositDanaDialogState();
+}
+
+class _DepositDanaDialogState extends State<_DepositDanaDialog> {
+  final _controller = TextEditingController(text: '50000');
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Deposit Dana'),
+      content: TextField(
+        controller: _controller,
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(
+          prefixText: 'Rp ',
+          labelText: 'Nominal',
+          helperText: 'Nanti dibuka halaman pembayaran Midtrans Sandbox — pakai metode pembayaran simulasi (mis. kartu test), bukan uang beneran.',
+          helperMaxLines: 3,
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+        FilledButton(
+          onPressed: () {
+            final amount = int.tryParse(_controller.text.trim());
+            if (amount == null || amount <= 0) return;
+            Navigator.of(context).pop(amount);
+          },
+          child: const Text('Lanjut Bayar'),
+        ),
+      ],
+    );
+  }
+}
+
+/// "Menunggu Pembayaran" — listen LIVE ke 1 dokumen transaksi Firestore
+/// spesifik (`wallets/{uid}/transactions/{orderId}`) selama user
+/// menyelesaikan pembayaran di halaman Snap (browser eksternal yang barusan
+/// kebuka). Begitu webhook `midtransNotificationHandler` ubah status jadi
+/// 'success'/'failed', dialog ini otomatis bereaksi — TIDAK perlu polling
+/// manual/refresh manual, ini bukti konkret kegunaan real-time listener
+/// Firestore (di luar scope Hive-cache offline-first CPMK 4 yang udah ada).
+class _WaitingPaymentDialog extends StatelessWidget {
+  const _WaitingPaymentDialog({required this.orderId});
+
+  final String orderId;
+
+  @override
+  Widget build(BuildContext context) {
+    final uid = fb.FirebaseAuth.instance.currentUser?.uid;
+    final stream = uid == null
+        ? const Stream<DocumentSnapshot<Map<String, dynamic>>>.empty()
+        : FirebaseFirestore.instance
+            .collection('wallets')
+            .doc(uid)
+            .collection('transactions')
+            .doc(orderId)
+            .snapshots();
+
+    return PopScope(
+      canPop: false,
+      child: AlertDialog(
+        title: const Text('Menunggu Pembayaran'),
+        content: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          stream: stream,
+          builder: (context, snapshot) {
+            final status = snapshot.data?.data()?['status'] as String?;
+            if (status == 'success') {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (Navigator.of(context).canPop()) Navigator.of(context).pop(true);
+              });
+            }
+            final label = switch (status) {
+              'success' => 'Pembayaran berhasil! Menutup...',
+              'failed' => 'Pembayaran gagal/dibatalkan di Midtrans.',
+              _ => 'Selesaikan pembayaran di halaman/tab yang barusan kebuka — layar ini update otomatis begitu Midtrans konfirmasi.',
+            };
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (status != 'success' && status != 'failed') ...[
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: AppSpacing.md),
+                ],
+                Text(label, textAlign: TextAlign.center),
+              ],
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Tutup (cek lagi nanti)'),
           ),
         ],
       ),

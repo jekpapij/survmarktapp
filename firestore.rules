@@ -1,0 +1,64 @@
+// CPMK 5 (Integration Engine) — Firestore Security Rules buat SurvMarkt.
+// TIDAK di-deploy lewat CLI (nggak perlu `firebase init firestore`) — cukup
+// PASTE ISI FILE INI ke Firebase Console -> Build -> Firestore Database ->
+// tab "Rules" -> replace semua isinya -> klik "Publish". Lihat checklist
+// lengkap di CLAUDE.md.
+//
+// Scope CPMK 5 malam ini cuma Auth + Wallet (keputusan user) — cuma 2
+// collection ini yang punya rules eksplisit, semua collection lain
+// otomatis DITOLAK (Firestore default-deny kalau nggak ada `match` yang
+// cocok) — aman, karena fitur lain (survei, notifikasi, admin panel) masih
+// mock, nggak pernah manggil Firestore sama sekali.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // users/{uid} — profil (nama/phone/role/dst), 1:1 sama uid Firebase
+    // Authentication. Cuma pemilik akun sendiri yang boleh baca/tulis.
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid;
+      // `role`/`email` SENGAJA dikunci — nggak boleh diubah lewat update
+      // biasa (form "Edit Profil" app ini emang nggak pernah nyoba ngirim
+      // 2 field itu). Ini nyegah user iseng nulis Firestore langsung
+      // (lewat DevTools/API lain) buat "naik role" jadi admin sendiri.
+      allow update: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.role == resource.data.role
+                    && request.resource.data.email == resource.data.email;
+      allow delete: if false;
+    }
+
+    // wallets/{uid} — saldo + riwayat transaksi.
+    match /wallets/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      // Dokumen awal (dibikin bareng users/{uid} pas register) HARUS
+      // mulai dari saldo 0 — nyegah user bikin dokumen wallet sendiri
+      // dengan saldo awal yang udah "diisi".
+      allow create: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.balance == 0;
+      // Update saldo dari CLIENT (app Flutter) CUMA boleh bikin saldo
+      // TURUN atau TETAP (dipakai "Tarik Dana") — nambah saldo (Deposit
+      // Dana lewat Midtrans) CUMA lewat Cloud Function
+      // `midtransNotificationHandler` yang pakai Admin SDK (otomatis BYPASS
+      // Security Rules ini sepenuhnya, jadi baris ini nggak ngeblokir dia).
+      allow update: if request.auth != null && request.auth.uid == uid
+                    && request.resource.data.balance <= resource.data.balance;
+      allow delete: if false;
+
+      match /transactions/{txId} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        // Client cuma boleh bikin transaksi 'expense' yang LANGSUNG
+        // 'success' (Tarik Dana, lihat `WalletRemoteDataSourceFirestore.
+        // requestWithdrawal`) — transaksi 'deposit' (Midtrans) CUMA lewat
+        // Cloud Function (Admin SDK bypass), sama alasannya kayak balance.
+        allow create: if request.auth != null && request.auth.uid == uid
+                      && request.resource.data.type == 'expense'
+                      && request.resource.data.status == 'success';
+        // Ledger transaksi IMMUTABLE dari sisi client — perubahan status
+        // pending->success/failed (Midtrans) CUMA lewat Cloud Function.
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+  }
+}

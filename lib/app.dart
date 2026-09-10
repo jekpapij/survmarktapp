@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/constants/app_colors.dart';
+import 'core/utils/root_messenger.dart';
+import 'features/notifications/presentation/providers/push_notification_providers.dart';
 import 'router.dart';
 
 class SurvMarktApp extends ConsumerWidget {
@@ -10,10 +12,18 @@ class SurvMarktApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    // CPMK 5 (Integration Engine) — "nyalain" push notification (registrasi
+    // token FCM begitu user login + listener notifikasi foreground) buat
+    // SEUMUR HIDUP app, bukan cuma pas 1 layar tertentu kebuka (beda dari
+    // `walletAutoSyncProvider` yang sengaja di-watch per-layar Wallet).
+    // Lihat catatan lengkap di `push_notification_providers.dart`.
+    ref.watch(pushNotificationProvider);
+    ref.watch(pushNotificationForegroundListenerProvider);
 
     return MaterialApp.router(
       title: 'SurvMarkt',
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(

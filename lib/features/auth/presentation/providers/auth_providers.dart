@@ -6,6 +6,7 @@ import '../../../../core/network/dio_client.dart';
 import '../../../../core/network/firebase_google_auth_service.dart';
 import '../../data/datasources/auth_local_datasource.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
+import '../../data/datasources/auth_remote_datasource_firebase.dart';
 import '../../data/datasources/auth_remote_datasource_mock.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -53,6 +54,15 @@ final firebaseGoogleAuthServiceProvider = Provider<FirebaseGoogleAuthService>((r
 /// `auth_remote_datasource_mock.dart`.
 final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>((ref) {
   final googleAuthService = ref.watch(firebaseGoogleAuthServiceProvider);
+  // CPMK 5 (Integration Engine) — `useFirebaseBackend` diperiksa DULUAN,
+  // di luar/sebelum `useMockBackend`: backend Firebase (scope "Auth +
+  // Wallet dulu", lihat CLAUDE.md) BUKAN varian dari toggle mock/Dio yang
+  // lama, jadi ini flag TERPISAH yang menang duluan kalau `true`. Default
+  // `false` (safety-net) — lihat catatan lengkap di `ApiConstants.
+  // useFirebaseBackend`.
+  if (ApiConstants.useFirebaseBackend) {
+    return AuthRemoteDataSourceFirebase(googleAuthService: googleAuthService);
+  }
   if (ApiConstants.useMockBackend) {
     // Update 2026-09-09 (bugfix role responden): `AuthRemoteDataSourceMock`
     // sekarang stateful (nyimpen registry akun ter-register) — nggak bisa

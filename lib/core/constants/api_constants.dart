@@ -24,6 +24,37 @@ class ApiConstants {
   /// sekali (manfaat Clean Architecture: cuma provider yang diganti).
   static const bool useMockBackend = bool.fromEnvironment('USE_MOCK_BACKEND', defaultValue: true);
 
+  /// CPMK 5 (Integration Engine) — toggle KHUSUS Auth+Wallet (scope yang
+  /// disepakati, bukan semua fitur) buat pindah dari [useMockBackend] ke
+  /// backend Firebase BENERAN (Firestore) — lihat
+  /// `AuthRemoteDataSourceFirebase`/`WalletRemoteDataSourceFirestore`. Kalau
+  /// `true`, provider di `auth_providers.dart`/`wallet_providers.dart` milih
+  /// datasource Firebase itu DULUAN (nggak peduli [useMockBackend]) — kalau
+  /// `false`, jalan seperti biasa (Mock, sesuai [useMockBackend]).
+  ///
+  /// Default `false` — safety-net yang SAMA persis kayak Google Sign-In
+  /// (`Firebase.initializeApp()` try/catch di `main.dart`, plugin Gradle
+  /// kondisional): app WAJIB tetap 100% jalan normal (pakai Mock) SEBELUM
+  /// user kelar checklist setup Firestore Console + Cloud Functions. Begitu
+  /// checklist itu kelar, jalanin
+  /// `flutter run --dart-define=USE_FIREBASE_BACKEND=true` (atau ganti
+  /// `defaultValue` di sini jadi `true`).
+  static const bool useFirebaseBackend = bool.fromEnvironment('USE_FIREBASE_BACKEND', defaultValue: false);
+
+  /// CPMK 5 — base URL project Supabase (buat Edge Functions Payment
+  /// Gateway Midtrans, lihat `MidtransService`). Update 2026-09-10: Payment
+  /// Gateway dipindah dari Firebase Cloud Functions ke Supabase Edge
+  /// Functions (Cloud Functions WAJIB upgrade project ke plan Blaze —
+  /// Google minta prepayment di muka buat akun billing baru, sementara
+  /// Supabase free tier nggak perlu kartu sama sekali buat kasus pemakaian
+  /// kecil kayak ini). Bentuknya `https://<project-ref>.supabase.co/functions/v1`
+  /// (project-ref didapet abis bikin project Supabase — lihat checklist
+  /// CLAUDE.md "CPMK 5 — Payment Gateway Midtrans via Supabase"). Kosong
+  /// by default — `MidtransService.createDeposit` sengaja throw
+  /// `ServerException` yang jelas kalau ini belum di-set, bukan diem-diem
+  /// gagal connect ke URL kosong.
+  static const String supabaseFunctionsBaseUrl = String.fromEnvironment('SUPABASE_FUNCTIONS_URL', defaultValue: '');
+
   // Auth — PROMPT_SPEC.md §8
   static const String login = '/auth/login';
   static const String register = '/auth/register';

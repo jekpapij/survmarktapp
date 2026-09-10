@@ -1,10 +1,14 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 
+import '../../../../core/constants/api_constants.dart';
 import '../../../../core/network/connectivity_service.dart';
+import '../../../../core/network/midtrans_service.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../data/datasources/wallet_local_datasource.dart';
 import '../../data/datasources/wallet_remote_datasource.dart';
+import '../../data/datasources/wallet_remote_datasource_firestore.dart';
 import '../../data/datasources/wallet_remote_datasource_mock.dart';
 import '../../data/repositories/wallet_repository_impl.dart';
 import '../../domain/entities/transaction_entity.dart';
@@ -14,8 +18,25 @@ import '../../domain/repositories/wallet_repository.dart';
 /// stateful (lihat catatan lengkap di kelasnya), jadi harus `Provider`
 /// biasa (singleton sepanjang app jalan, pola sama kayak
 /// `authRemoteDataSourceProvider`), bukan literal const.
+///
+/// Update CPMK 5: `ApiConstants.useFirebaseBackend` (flag yang SAMA kayak
+/// dipakai `authRemoteDataSourceProvider`) milih [WalletRemoteDataSourceFirestore]
+/// — `WalletRepositoryImpl` di bawah nggak berubah sama sekali, cuma
+/// datasource remote-nya yang di-swap (lihat catatan lengkap di kelas itu).
 final walletRemoteDataSourceProvider = Provider<WalletRemoteDataSource>((ref) {
+  if (ApiConstants.useFirebaseBackend) {
+    return WalletRemoteDataSourceFirestore();
+  }
   return WalletRemoteDataSourceMock();
+});
+
+/// CPMK 5 — Payment Gateway (Midtrans Snap Sandbox via Supabase Edge
+/// Functions, update 2026-09-10 — lihat catatan lengkap kenapa pindah dari
+/// Firebase Cloud Functions di `MidtransService`), dipakai "Deposit Dana"
+/// di `ResearcherWalletScreen`. Singleton biasa, cuma dipakai kalau
+/// `ApiConstants.useFirebaseBackend` true.
+final midtransServiceProvider = Provider<MidtransService>((ref) {
+  return MidtransService(http.Client());
 });
 
 final walletLocalDataSourceProvider = Provider<WalletLocalDataSource>((ref) {
