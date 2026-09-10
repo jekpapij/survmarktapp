@@ -120,7 +120,7 @@ class _ResearcherProfileEditScreenState extends ConsumerState<ResearcherProfileE
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _InfoBanner(),
+                const _InfoBanner(),
                 const SizedBox(height: AppSpacing.md),
                 _SectionCard(
                   eyebrow: 'IDENTITAS',

@@ -135,17 +135,17 @@ class _AuditLogBody extends StatelessWidget {
         children: [
           _CategoryChips(selected: selectedCategory, onChanged: onCategoryChanged),
           const SizedBox(height: AppSpacing.md),
-          _SoftDeleteBanner(),
+          const _SoftDeleteBanner(),
           const SizedBox(height: AppSpacing.md),
           if (sorted.isEmpty)
-            Center(
+            const Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.inbox_outlined, size: 40, color: AppColors.slate400),
-                    const SizedBox(height: AppSpacing.sm),
+                    Icon(Icons.inbox_outlined, size: 40, color: AppColors.slate400),
+                    SizedBox(height: AppSpacing.sm),
                     Text('Belum ada aktivitas di kategori ini.', style: AppTypography.bodyMedium),
                   ],
                 ),

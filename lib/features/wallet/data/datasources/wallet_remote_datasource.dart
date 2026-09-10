@@ -9,4 +9,10 @@ abstract class WalletRemoteDataSource {
   Future<int> getBalance({UserRole? forRole});
 
   Future<List<TransactionEntity>> getTransactions({UserRole? forRole});
+
+  /// CPMK 4 — dipanggil pas ONLINE (langsung, atau pas replay antrean
+  /// offline). "Server" (mock) nyatetin transaksi baru & motong saldo,
+  /// balikin `TransactionEntity` final (id resmi dari "server", bukan id
+  /// sementara `pending-*` yang dipakai pas offline).
+  Future<TransactionEntity> requestWithdrawal({required UserRole forRole, required int amount});
 }

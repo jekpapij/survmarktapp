@@ -180,14 +180,14 @@ class _WithdrawalBody extends StatelessWidget {
         ),
         Expanded(
           child: filtered.isEmpty
-              ? Center(
+              ? const Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    padding: EdgeInsets.all(AppSpacing.lg),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.inbox_outlined, size: 40, color: AppColors.slate400),
-                        const SizedBox(height: AppSpacing.sm),
+                        Icon(Icons.inbox_outlined, size: 40, color: AppColors.slate400),
+                        SizedBox(height: AppSpacing.sm),
                         Text('Belum ada withdrawal di tab ini.', style: AppTypography.bodyMedium),
                       ],
                     ),

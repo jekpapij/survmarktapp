@@ -58,13 +58,44 @@ class TransactionTile extends StatelessWidget {
                   style: AppTypography.monoSmall.copyWith(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.slate900),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  // Update 2026-09-09: `dateTimeShort` (bukan `shortDate`
-                  // polos) — nampilin jam kalau transaksinya nyimpen jam
-                  // beneran (respondent-wallet), tetep polos-tanggal buat
-                  // data lama yang cuma nyimpen tanggal (researcher-wallet).
-                  Formatters.dateTimeShort(transaction.date),
-                  style: AppTypography.bodySmall.copyWith(fontSize: 12, color: AppColors.slate400),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        // Update 2026-09-09: `dateTimeShort` (bukan
+                        // `shortDate` polos) — nampilin jam kalau
+                        // transaksinya nyimpen jam beneran (respondent-
+                        // wallet), tetep polos-tanggal buat data lama yang
+                        // cuma nyimpen tanggal (researcher-wallet).
+                        Formatters.dateTimeShort(transaction.date),
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.bodySmall.copyWith(fontSize: 12, color: AppColors.slate400),
+                      ),
+                    ),
+                    // CPMK 4 (Offline-First) — badge ini SATU-SATUNYA tempat
+                    // di UI yang beda antara transaksi "settled" vs yang
+                    // masih ke-antre offline; sisanya (baris, warna, ikon)
+                    // dirender IDENTIK, sengaja, biar transaksi pending
+                    // nggak keliatan kayak error/gagal — cuma "belum sinkron".
+                    if (transaction.isPendingSync) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.amber500.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
+                        child: Text(
+                          'MENUNGGU SINKRONISASI',
+                          style: AppTypography.monoSmall.copyWith(
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.amber500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),

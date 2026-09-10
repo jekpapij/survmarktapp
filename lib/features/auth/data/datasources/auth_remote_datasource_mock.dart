@@ -1,4 +1,5 @@
 import '../../../../core/errors/exceptions.dart';
+import '../../../../core/network/firebase_google_auth_service.dart';
 import '../../domain/entities/user_entity.dart';
 import '../models/user_model.dart';
 import 'auth_remote_datasource.dart';
@@ -45,7 +46,10 @@ import 'auth_remote_datasource.dart';
 /// dipertahankan sebagai fallback — masih berguna buat quick-login demo
 /// tanpa perlu register dulu (mis. langsung login pakai "admin@test.com").
 class AuthRemoteDataSourceMock implements AuthRemoteDataSource {
-  AuthRemoteDataSourceMock();
+  AuthRemoteDataSourceMock({required FirebaseGoogleAuthService googleAuthService})
+      : _googleAuthService = googleAuthService;
+
+  final FirebaseGoogleAuthService _googleAuthService;
 
   static const _networkDelay = Duration(milliseconds: 700);
 
@@ -83,6 +87,88 @@ class AuthRemoteDataSourceMock implements AuthRemoteDataSource {
       user: registered ?? _dummyUserFor(identifier),
       accessToken: 'mock-access-token',
       refreshToken: 'mock-refresh-token',
+    );
+  }
+
+  /// "Masuk dengan Google" — Google Sign-In BENERAN via
+  /// `FirebaseGoogleAuthService` (Firebase Auth + Google Sign-In SDK),
+  /// BUKAN dummy hardcoded lagi (versi sebelumnya: profil "Alex Wijaya"
+  /// yang di-fix). Backend REST-nya TETAP mock (`_registeredUsers` in-
+  /// memory, sejalan `ApiConstants.useMockBackend`) — cuma identitas
+  /// Google-nya yang sekarang 100% nyata (email/nama/foto beneran dari
+  /// akun Google yang dipilih user di dialog).
+  ///
+  /// **Update (pertanyaan user 2026-09-09 — "kok akun Google baru selalu
+  /// Responden?"):** versi SEBELUMNYA hardcode `role: UserRole.responden`
+  /// buat akun yang belum pernah `register()` manual — user nemuin ini
+  /// bukan bug, tapi keputusan desain yang belum dijelasin. Diputuskan
+  /// diganti: akun yang UDAH pernah kedaftar (dicek dari `_registeredUsers`
+  /// by email, entah lewat register manual ATAU Google sebelumnya) langsung
+  /// login pake role yang UDAH ADA (`GoogleSignInStart.loggedIn`), tapi
+  /// akun BARU SEKARANG BALIK `GoogleSignInStart.needsRoleSelection` —
+  /// BELUM dibikin/disimpen ke registry di sini, nunggu
+  /// [completeGoogleRegistration] dipanggil abis user beneran milih role
+  /// di dialog `LoginScreen`. Konsekuensinya: kalau user BATAL milih di
+  /// dialog itu, nggak ada akun "nyangkut" setengah jadi — `_registeredUsers`
+  /// tetap bersih kayak sebelum dia tap "Masuk dengan Google".
+  @override
+  Future<GoogleSignInStart> loginWithGoogle() async {
+    final googleResult = await _googleAuthService.signIn();
+    if (googleResult == null) {
+      throw const AuthException('Login Google dibatalkan.');
+    }
+    await Future.delayed(_networkDelay);
+
+    final normalizedEmail = _normalize(googleResult.email);
+    final existing = _registeredUsers[normalizedEmail];
+    if (existing != null) {
+      return GoogleSignInStart.loggedIn(
+        AuthSession(
+          user: existing,
+          accessToken: 'firebase-${googleResult.uid}',
+          refreshToken: 'firebase-${googleResult.uid}',
+        ),
+      );
+    }
+    return GoogleSignInStart.needsRoleSelection(
+      googleId: googleResult.uid,
+      email: googleResult.email,
+      name: googleResult.name,
+    );
+  }
+
+  /// Finalisasi akun Google BARU — dipanggil SETELAH [loginWithGoogle]
+  /// balikin `needsRoleSelection == true` DAN user udah pilih role di
+  /// dialog. Session hasilnya TETAP di-`cacheSession` lewat
+  /// `AuthLocalDataSource` yang SAMA persis kayak `login()` biasa (lihat
+  /// `AuthRepositoryImpl.completeGoogleRegistration`) — jadi ini juga
+  /// sekalian bukti tambahan integrasi local storage CPMK 4, bukan cuma
+  /// UI kosmetik.
+  @override
+  Future<AuthSession> completeGoogleRegistration({
+    required String googleId,
+    required String email,
+    required String name,
+    required UserRole role,
+  }) async {
+    await Future.delayed(_networkDelay);
+
+    final user = UserModel(
+      id: googleId,
+      name: name,
+      email: email,
+      phone: '',
+      role: role,
+      // Sama kayak `register()`/`_dummyUserFor` — institusi cuma keisi
+      // default buat Peneliti.
+      institution: role == UserRole.peneliti ? 'Universitas Indonesia' : '',
+    );
+    _rememberRegisteredUser(user);
+
+    return AuthSession(
+      user: user,
+      accessToken: 'firebase-$googleId',
+      refreshToken: 'firebase-$googleId',
     );
   }
 

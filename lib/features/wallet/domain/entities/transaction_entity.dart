@@ -17,6 +17,7 @@ class TransactionEntity extends Equatable {
     required this.title,
     required this.amount,
     required this.date,
+    this.isPendingSync = false,
   });
 
   final String id;
@@ -28,6 +29,16 @@ class TransactionEntity extends Equatable {
   final int amount;
   final DateTime date;
 
+  /// Update CPMK 4 (Offline-First): `true` kalau transaksi ini dibuat
+  /// SAAT DEVICE OFFLINE (mis. "Tarik Dana" pas nggak ada koneksi) — udah
+  /// tampil optimis di UI & tersimpan di Hive, tapi BELUM ke-replay ke
+  /// "server" (`WalletRemoteDataSourceMock`). Field opsional dengan default
+  /// `false` biar SEMUA call-site lama (`ResearcherRemoteDataSourceMock`
+  /// dkk, transaksi yang emang udah "settled") nggak perlu diubah sama
+  /// sekali. Dibaca `TransactionTile` buat nampilin badge "Menunggu
+  /// Sinkronisasi".
+  final bool isPendingSync;
+
   @override
-  List<Object?> get props => [id, type, title, amount, date];
+  List<Object?> get props => [id, type, title, amount, date, isPendingSync];
 }

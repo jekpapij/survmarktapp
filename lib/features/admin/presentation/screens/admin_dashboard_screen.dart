@@ -180,7 +180,7 @@ class _RevenueHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxHeight = 56.0;
+    const maxHeight = 56.0;
 
     return Container(
       width: double.infinity,

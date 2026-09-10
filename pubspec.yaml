@@ -25,6 +25,9 @@ dependencies:
   hive_flutter: ^1.1.0
   flutter_secure_storage: ^9.0.0
 
+  # Connectivity (CPMK 4 — deteksi online/offline buat pola Offline-First)
+  connectivity_plus: ^6.0.3
+
   # Utils
   intl: ^0.18.1
   equatable: ^2.0.5
@@ -39,6 +42,13 @@ dependencies:
   # Firebase (untuk Push Notification nanti)
   firebase_core: ^3.0.0
   firebase_messaging: ^15.0.0
+
+  # Firebase Authentication — "Masuk dengan Google" BENERAN (bukan
+  # simulasi dummy lagi, lihat CLAUDE.md "Google Sign-In BENERAN via
+  # Firebase"). Setup Firebase Console (SHA-1, google-services.json, dst)
+  # WAJIB kelar duluan sebelum ini beneran bisa dipakai.
+  firebase_auth: ^5.3.0
+  google_sign_in: ^6.2.1
 
 dev_dependencies:
   flutter_test:

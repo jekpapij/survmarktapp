@@ -1,10 +1,14 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:survmarkt/core/errors/failures.dart';
+import 'package:survmarkt/features/auth/domain/entities/google_signin_outcome.dart';
 import 'package:survmarkt/features/auth/domain/entities/user_entity.dart';
 import 'package:survmarkt/features/auth/domain/repositories/auth_repository.dart';
+import 'package:survmarkt/features/auth/domain/usecases/cancel_google_signin_usecase.dart';
+import 'package:survmarkt/features/auth/domain/usecases/complete_google_registration_usecase.dart';
 import 'package:survmarkt/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:survmarkt/features/auth/domain/usecases/login_usecase.dart';
+import 'package:survmarkt/features/auth/domain/usecases/login_with_google_usecase.dart';
 import 'package:survmarkt/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:survmarkt/features/auth/domain/usecases/register_usecase.dart';
 import 'package:survmarkt/features/auth/presentation/notifiers/auth_notifier.dart';
@@ -25,8 +29,47 @@ class _FakeAuthRepository implements AuthRepository {
     required String identifier,
     required String password,
   }) async {
-    return loginResult ?? Left(const AuthFailure());
+    return loginResult ?? const Left(AuthFailure());
   }
+
+  // Bugfix (laporan user — `flutter analyze` gagal, "Missing concrete
+  // implementation of 'abstract class AuthRepository.loginWithGoogle'"):
+  // method ini ketinggalan pas `AuthRepository` diperluas buat "Masuk
+  // dengan Google" (beberapa update terpisah setelah test ini ditulis) —
+  // fake repo di sini WAJIB implement SEMUA method abstract-nya.
+  //
+  // Update (fitur pilih-role Google): return type-nya ikut berubah jadi
+  // `GoogleSignInOutcome` — di fake ini SELALU dibungkus `.loggedIn(...)`
+  // (skenario "akun BARU perlu pilih role" nggak dites lewat notifier-level
+  // test ini, cukup diverifikasi manual/CLAUDE.md — reuse `loginResult`
+  // yang SAMA kayak `login()` di atas).
+  @override
+  Future<Either<Failure, GoogleSignInOutcome>> loginWithGoogle() async {
+    if (loginResult == null) return const Left(AuthFailure());
+    return loginResult!.fold(
+      (failure) => Left(failure),
+      (user) => Right(GoogleSignInOutcome.loggedIn(user)),
+    );
+  }
+
+  /// Fake buat finalisasi akun Google baru — reuse `loginResult` yang SAMA
+  /// (skenario ini juga nggak dites detail di sini, lihat catatan di atas).
+  @override
+  Future<Either<Failure, UserEntity>> completeGoogleRegistration({
+    required String googleId,
+    required String email,
+    required String name,
+    required UserRole role,
+  }) async {
+    return loginResult ?? const Left(AuthFailure());
+  }
+
+  /// Bugfix (laporan user — abis Batal di dialog pilih role, "Masuk dengan
+  /// Google" berikutnya langsung ke dialog akun yang tadi lagi): fake ini
+  /// juga WAJIB implement method baru ini — no-op, selalu sukses (sama
+  /// kayak perilaku beneran di `AuthRepositoryImpl.cancelGoogleSignIn`).
+  @override
+  Future<Either<Failure, void>> cancelGoogleSignIn() async => const Right(null);
 
   @override
   Future<Either<Failure, UserEntity>> register({
@@ -36,7 +79,7 @@ class _FakeAuthRepository implements AuthRepository {
     required String password,
     required UserRole role,
   }) async {
-    return Right(testUser);
+    return const Right(testUser);
   }
 
   @override
@@ -77,7 +120,7 @@ class _FakeAuthRepository implements AuthRepository {
     String education = '',
     String fieldOfWork = '',
   }) async =>
-      Right(testUser);
+      const Right(testUser);
 }
 
 const testUser = UserEntity(
@@ -91,6 +134,11 @@ const testUser = UserEntity(
 AuthNotifier _buildNotifier(_FakeAuthRepository repo) {
   return AuthNotifier(
     loginUseCase: LoginUseCase(repo),
+    // Bugfix (sama kayak catatan di `loginWithGoogle()` atas) —
+    // `AuthNotifier` sekarang butuh 2 use case Google ini juga.
+    loginWithGoogleUseCase: LoginWithGoogleUseCase(repo),
+    completeGoogleRegistrationUseCase: CompleteGoogleRegistrationUseCase(repo),
+    cancelGoogleSignInUseCase: CancelGoogleSignInUseCase(repo),
     registerUseCase: RegisterUseCase(repo),
     logoutUseCase: LogoutUseCase(repo),
     getCurrentUserUseCase: GetCurrentUserUseCase(repo),
@@ -125,7 +173,7 @@ void main() {
     });
 
     test('gagal → state akhir error berisi pesan, return false', () async {
-      fakeRepo.loginResult = Left(const AuthFailure('Email/No. HP atau password salah.'));
+      fakeRepo.loginResult = const Left(AuthFailure('Email/No. HP atau password salah.'));
 
       final success = await notifier.login(identifier: 'salah@test.com', password: 'salah');
 
