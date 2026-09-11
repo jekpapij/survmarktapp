@@ -1,9 +1,35 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// CPMK 6 (Security & CI/CD) — signing config release BENERAN, gantiin
+// signing pakai debug key (placeholder bawaan template Flutter, cuma buat
+// `flutter run --release` lokal, TIDAK BOLEH dipakai buat AAB yang
+// didistribusikan). Baca dari `android/key.properties` (LOCAL, git-ignored,
+// lihat `android/key.properties.example` buat templatenya) kalau file itu
+// ada di laptop lo; kalau nggak ada (kejadian ini di CI — GitHub Actions
+// runner-nya nggak pernah dapet file lokal manapun), fallback ke environment
+// variable (`KEYSTORE_PATH`/`KEYSTORE_PASSWORD`/`KEY_ALIAS`/`KEY_PASSWORD`,
+// di-set dari GitHub Actions Secrets di `.github/workflows/build-release.
+// yml`) — jadi 1 config Gradle yang sama jalan konsisten di 2 tempat tanpa
+// pernah nyimpen kredensial sensitif apapun ke git. Checklist lengkap
+// generate keystore-nya (`keytool`) ada di CLAUDE.md bagian CPMK 6.
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
+fun signingProp(propertyKey: String, envVar: String): String? =
+    keystoreProperties.getProperty(propertyKey) ?: System.getenv(envVar)
+
+val hasReleaseSigning = keystorePropertiesFile.exists() || System.getenv("KEYSTORE_PATH") != null
 
 // Firebase (Google Sign-In BENERAN) — plugin di-apply KONDISIONAL:
 // `google-services.json` BELUM ada sampai setup Firebase Console kelar
@@ -47,11 +73,43 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            val storePath = signingProp("storeFile", "KEYSTORE_PATH")
+            if (storePath != null) {
+                storeFile = file(storePath)
+                storePassword = signingProp("storePassword", "KEYSTORE_PASSWORD")
+                keyAlias = signingProp("keyAlias", "KEY_ALIAS")
+                keyPassword = signingProp("keyPassword", "KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Update CPMK 6: pakai signing config "release" beneran kalau
+            // keystore-nya udah ke-setup (lokal via key.properties ATAU CI
+            // via env vars) — fallback ke debug key SENGAJA dipertahankan
+            // biar `flutter run --release` tetap jalan buat testing lokal
+            // sebelum keystore dibikin, TAPI AAB hasil fallback ini TIDAK
+            // BOLEH didistribusikan (bukan signed pakai key produksi).
+            signingConfig = if (hasReleaseSigning) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+
+            // CPMK 6 (Security) — obfuskasi kode (R8) + shrink resource
+            // buat release build. `proguard-rules.pro` (baru) isinya
+            // keep-rules Flutter+Firebase standar, biar app nggak crash
+            // runtime abis di-obfuskasi (lihat komentar lengkap di file
+            // itu kenapa perlu).
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }

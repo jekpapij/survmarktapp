@@ -1,0 +1,14 @@
+# Template `android/key.properties` — COPY file ini jadi `android/key.properties`
+# (git-ignored, JANGAN PERNAH commit yang aslinya) buat build RELEASE LOKAL
+# di laptop lo. CI (GitHub Actions) TIDAK pakai file ini sama sekali — di
+# CI, 4 nilai yang sama di-set lewat GitHub Actions Secrets langsung (lihat
+# `.github/workflows/build-release.yml` + `android/app/build.gradle.kts`).
+#
+# Cara generate keystore-nya (`release-keystore.jks`) — lihat CLAUDE.md
+# bagian CPMK 6 buat command `keytool` lengkapnya. Taruh file .jks hasilnya
+# di `android/app/release-keystore.jks` (juga git-ignored).
+
+storeFile=release-keystore.jks
+storePassword=GANTI_DENGAN_PASSWORD_KEYSTORE_ASLI
+keyAlias=survmarkt
+keyPassword=GANTI_DENGAN_PASSWORD_KEY_ASLI
