@@ -46,3 +46,18 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# CPMK 6 (Security & Secrets Management) — rules ini defensive: nutup
+# SEMUA file `.env` DIMANAPUN di dalam repo (bukan cuma `supabase/.env`
+# doang, yang sempet ke-push nggak sengaja 2026-09-10 — lihat CLAUDE.md
+# "Bugfix REAL: .env ke-push ke GitHub" buat kronologinya), plus keystore
+# signing Android & file config Firebase yang sensitif. `.env.example`
+# (root & `supabase/`) SENGAJA di-exclude dari rule ini — itu template
+# tanpa nilai asli, justru WAJIB di-commit per Section V rubrik.
+**/.env
+!**/.env.example
+android/key.properties
+android/app/*.jks
+android/app/*.keystore
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
